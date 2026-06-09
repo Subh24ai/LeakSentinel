@@ -37,6 +37,8 @@ dependencies = [
     # Document handling
     "openpyxl>=3.1",
     "python-multipart>=0.0.12",
+    "reportlab>=4.0",   # generate synthetic PDF documents
+    "pymupdf>=1.24",    # rasterize PDF pages to images for vision extraction
 ]
 
 [project.optional-dependencies]

@@ -39,6 +39,7 @@ def _load_models() -> None:
     import: model modules import ``Base`` from here.
     """
     from leaksentinel.reconciliation import models  # noqa: F401
+    from leaksentinel.actions import escalation, remediation  # noqa: F401
 
 
 def create_all() -> None:

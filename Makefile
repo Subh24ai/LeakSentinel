@@ -50,6 +50,26 @@ db-init: ## Create the schema (tables) in the running Postgres
 db-recreate: ## Drop and recreate all tables (destructive)
 	$(PY) scripts/init_db.py --reset
 
+.PHONY: gen-data
+gen-data: ## Generate synthetic data + load master tables into Postgres
+	$(PY) scripts/generate_synthetic_data.py
+
+.PHONY: ingest
+ingest: ## Normalize the 4 insurer CSVs into insurer_commission_feeds
+	$(PY) -m leaksentinel.ingestion.loader
+
+.PHONY: reconcile
+reconcile: ## Run the reconciliation engine and print the confusion summary
+	$(PY) -m leaksentinel.reconciliation.engine
+
+.PHONY: gen-docs
+gen-docs: ## Generate synthetic insurance PDF documents (one with a planted mismatch)
+	$(PY) scripts/generate_documents.py
+
+.PHONY: extract-doc
+extract-doc: ## Real LLM extraction of a generated doc + validation (needs an API key)
+	$(PY) scripts/run_extraction.py
+
 .PHONY: run
 run: ## Start the FastAPI dev server
 	$(VENV)/bin/uvicorn leaksentinel.api.main:app --reload

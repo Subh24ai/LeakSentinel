@@ -1,0 +1,42 @@
+[
+  {
+    "file": "icici_lombard_IL-TW-100001.pdf",
+    "policy_no": "IL-TW-100001",
+    "insurer_name": "ICICI Lombard",
+    "customer_name": "Rohan Iyer",
+    "vehicle_reg": "MH16HE2679",
+    "true_premium": 1693.84,
+    "printed_premium": 1693.84,
+    "tampered_field": null
+  },
+  {
+    "file": "bajaj_BJ-TW-100002.pdf",
+    "policy_no": "BJ-TW-100002",
+    "insurer_name": "Bajaj",
+    "customer_name": "Riya Mehta",
+    "vehicle_reg": "DL02GP4611",
+    "true_premium": 2367.61,
+    "printed_premium": 2367.61,
+    "tampered_field": null
+  },
+  {
+    "file": "digit_DG-TW-100003.pdf",
+    "policy_no": "DG-TW-100003",
+    "insurer_name": "Digit",
+    "customer_name": "Kabir Patel",
+    "vehicle_reg": "KA14LD2519",
+    "true_premium": 2544.99,
+    "printed_premium": 2544.99,
+    "tampered_field": null
+  },
+  {
+    "file": "tata_aig_TA-TW-100004.pdf",
+    "policy_no": "TA-TW-100004",
+    "insurer_name": "Tata AIG",
+    "customer_name": "Aditya Das",
+    "vehicle_reg": "RJ08NC5803",
+    "true_premium": 1234.58,
+    "printed_premium": 1734.58,
+    "tampered_field": "premium"
+  }
+]
