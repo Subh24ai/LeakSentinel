@@ -6,7 +6,23 @@ Commission-reconciliation engine for two-wheeler insurance distribution.
 > generated data. The insurer names (ICICI Lombard, Bajaj, Digit, Tata AIG) and
 > OEM names (Hero, Honda, TVS, Bajaj, Ather) are real brands used purely to make
 > the scenario realistic. **No real insurer commission statements, and no
-> SureDrive internal systems or data, are involved.** See `scripts/generate_synthetic_data.py`.
+> distributor's internal systems or data, are involved.** See `scripts/generate_synthetic_data.py`.
+
+![LeakSentinel dashboard — ₹ at risk, ₹ recovered, leaks by insurer and reason, and the disposition breakdown](docs/dashboard.png)
+
+## Highlights
+
+- **Governed AI, not a GPT wrapper** — a vision-LLM only *reads* statements;
+  every decision about money is made by deterministic rules and gates.
+- **Five explainable leak detectors** — missing, underpaid, duplicate,
+  unprovisioned 1+1 renewals, and rounding — each with a reason a human can
+  re-derive and put in a dispute, plus an Isolation Forest for novel outliers.
+- **Safe by construction** — remediation is gated, idempotent (retries never
+  double-pay), and written to an immutable SHA-256 audit log; high-value items
+  short-circuit to a human queue.
+- **Complete stack** — Postgres → LangGraph pipeline → async FastAPI → React +
+  Vite dashboard, backed by **79 tests** and an oracle-checked precision/recall
+  guarantee (zero invented or missed leaks).
 
 ## Problem
 
@@ -127,7 +143,7 @@ pipeline, exposed over an **async FastAPI** surface and driven from a
   filters and a click-through **detail view**; and an **Audit & Escalations** view
   with **BLOCKED rows highlighted** and the human queue. One typed API client,
   money rendered from the string (never parsed to float), loading/error states
-  throughout. See [`frontend/README.md`](frontend/README.md) to run it.
+  throughout. Run it via **[Run the full stack](#run-the-full-stack)** below.
 
 ### Planned (optional hardening)
 
@@ -209,13 +225,13 @@ normalized to a single `PaymentStatus` enum.
 ## Tech stack
 
 **Backend** — Python 3.11+, SQLAlchemy 2 + psycopg (Postgres), pydantic v2,
-pandas, scikit-learn, **LangGraph** (orchestration) with optional **LangSmith**
-tracing, a **vision LLM** (Anthropic Claude / Groq, via LangChain) for document
-extraction, and **async FastAPI** + uvicorn for the HTTP surface. pytest (incl.
-async httpx) throughout.
+scikit-learn (Isolation Forest), **LangGraph** (orchestration) with optional
+**LangSmith** tracing, a **vision LLM** (Anthropic Claude / Groq, via LangChain)
+for document extraction, and **async FastAPI** + uvicorn for the HTTP surface.
+pytest (incl. async httpx) throughout.
 
 **Frontend** — **React + Vite + TypeScript**, a typed `fetch` API client, no UI
-framework dependency (hand-written design system). See `frontend/README.md`.
+framework dependency (hand-written design system).
 
 ## Run it end-to-end
 
@@ -307,7 +323,7 @@ actionable.)
 ## Run the full stack
 
 Once the data is seeded (steps 0–2 above), run the API and the dashboard in
-**two terminals**:
+**two terminals** (the frontend needs Node 18+):
 
 ```bash
 # Terminal 1 — backend API (FastAPI on http://localhost:8000, Swagger at /docs)
@@ -322,10 +338,51 @@ npm run dev
 Open **http://localhost:5173** and click **Run reconciliation** on the Dashboard
 to populate claims, escalations, and the audit log — then browse the Leaks table
 and the Audit & Escalations view. (CORS for `:5173` is already enabled on the
-API.) Full frontend details: [`frontend/README.md`](frontend/README.md).
+API.)
+
+### Frontend (`frontend/`)
+
+A React + Vite + TypeScript operational-intelligence dashboard that consumes the
+FastAPI backend live — **no mock data**, every number comes from the API.
+
+- **Dashboard** (`/`) — headline figures from `GET /metrics` (₹ at risk, ₹
+  recovered), a **Run reconciliation** button (`POST /reconcile`) that refreshes
+  everything, leaks-by-insurer and leaks-by-reason bar charts, and the
+  disposition breakdown.
+- **Leaks** (`/leaks`) — `GET /leaks` with working filters (status, insurer,
+  reason code, severity). Each row shows the policy, insurer, reason, the
+  human-readable explanation, ₹ amount, severity, and disposition. Click a row
+  for the detail view (`GET /leaks/{policy_no}`): reconciliation result, finding,
+  and any action taken.
+- **Audit & Escalations** (`/audit`) — `GET /audit` as a chronological log with
+  **BLOCKED** rows highlighted, and `GET /escalations` as the human queue (click
+  a row to expand its full finding context).
+
+![Leaks table — filters, human-readable explanations, ₹ amounts, severity and disposition](docs/leaks.png)
+
+Design notes: one accent colour (deep teal), warm paper ground, slate ink;
+Fraunces / IBM Plex Sans / IBM Plex Mono; restrained and data-dense, not flashy.
+A single typed API client (`src/api.ts`) mirrors the backend's Pydantic v2 models.
+**Money** arrives as a fixed-2dp string (e.g. `"7736.14"`) and is rendered as
+`₹7,736.14` by `formatMoney` **without ever parsing to a float**. Every view
+handles loading and error states.
+
+The API base URL defaults to `http://localhost:8000`; override with
+`VITE_API_BASE` if the API runs elsewhere. Other scripts:
+
+```bash
+cd frontend
+VITE_API_BASE=http://localhost:8000 npm run dev   # custom API base
+npm run build      # type-check (tsc --noEmit) + production build to dist/
+npm run preview    # serve the production build on :5173
+```
 
 ## Make targets
 
 `make help` lists everything (install, db-up/down/reset, db-init/recreate,
 gen-data, ingest, reconcile, **pipeline**, run, gen-docs, extract-doc, test,
 lint, clean).
+
+## License
+
+[MIT](LICENSE).
