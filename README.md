@@ -25,8 +25,11 @@ on `policy_no`, every feed has to be normalized into one canonical shape.
 
 ## Current status
 
-Built through the reconciliation engine. The detection layer and everything
-downstream are **not built yet** and are clearly marked below.
+Built end-to-end from ingestion through the gated-actions layer:
+**ingestion → reconciliation → detection → document intelligence →
+remediation / escalation**, all backed by tests. Only the agent orchestration,
+the full API surface, and a frontend remain **not built yet**; these are clearly
+marked below.
 
 ### Done
 
@@ -52,14 +55,31 @@ downstream are **not built yet** and are clearly marked below.
   / `CRM_MISMATCH`, persisting results with a status and preliminary reason code.
   The core leak query is kept in **both** raw SQL and SQLAlchemy form.
 - **Precision/recall tests** — the engine's output is asserted to match the
-  oracle exactly (any invented or missed leak fails the build). 42 tests total.
+  oracle exactly (any invented or missed leak fails the build).
+- **Detection layer** (`detection/rules.py` + `detection/anomaly.py`) —
+  explainable rule detectors (missing commission, underpaid-below-rate,
+  duplicate payment, 1+1 renewal-not-provisioned, rounding-delta) emitting
+  `reason_code` + `severity` + a plain-English explanation, plus a secondary
+  Isolation Forest anomaly net for novel patterns that never overrides a rule.
+  Asserted against the oracle in `test_detection.py`.
+- **Document intelligence** (`documents/extractor.py`,
+  `scripts/generate_documents.py`, `make gen-docs` / `make extract-doc`) —
+  generate synthetic insurer PDFs (one with a planted premium mismatch), extract
+  structured fields with the LLM, and validate them against ground truth
+  (`test_documents.py`).
+- **Gated actions** (`actions/`, `scripts/run_actions.py`) — remediation on
+  confirmed leaks behind three tested safety properties: **gated**
+  (`validate_action` blocks unless the finding is a confirmed open leak with a
+  real reason code above `MIN_CLAIM_THRESHOLD`), **idempotent** (SHA-256 key of
+  `policy_no|reason_code|amount`, so a retry returns the existing claim and never
+  double-pays), and **audited** (every action *and* every block appends a hashed
+  `audit_log` row). High-value or non-trivially-blocked findings route to a human
+  `escalations` queue; the insurer/CRM call sits behind a swappable
+  `ExternalClaimsAPI` stub. Covered by `test_actions.py`. The whole suite is 64
+  tests.
 
 ### Planned (NOT built)
 
-- **Detection layer** — renewal-not-provisioned (1+1) detection from the sale
-  flags, rounding-delta scoring, ML anomaly scoring beyond the deterministic rules.
-- **Document intelligence** — parse real statement files; generate dispute docs.
-- **Gated actions** — notify / dispute / escalate, with approval gates.
 - **LangGraph orchestration** — tie detection + documents + actions into an agent.
 - **API** — FastAPI surface (only a health/metadata stub exists today).
 - **Frontend** — none.
@@ -67,29 +87,53 @@ downstream are **not built yet** and are clearly marked below.
 ## Pipeline (as built)
 
 ```mermaid
-flowchart LR
-    subgraph BUILT["Built"]
-        CSV["Insurer CSVs<br/>(4 formats)"] --> NORM["Normalizers<br/>(registry / strategy)"]
-        NORM --> VIEW["ReconciliationView<br/>(canonical)"]
-        VIEW --> LOAD["Ingestion loader"]
-        LOAD --> FEEDS[("insurer_commission_feeds")]
-        MASTER[("policies / crm / sales")] --> ENG["Reconciliation engine"]
-        FEEDS --> ENG
-        ENG --> RES[("reconciliation_results")]
+%%{init: {'theme':'base','themeVariables':{'fontSize':'16px'},'flowchart':{'nodeSpacing':45,'rankSpacing':50,'curve':'basis'}}}%%
+flowchart TB
+    classDef proc    fill:#e8f0fe,stroke:#1a73e8,stroke-width:1.5px,color:#0b2545;
+    classDef store   fill:#fff4e5,stroke:#f59e0b,stroke-width:1.5px,color:#5b3b00;
+    classDef gate    fill:#fde8e8,stroke:#d93025,stroke-width:1.5px,color:#5c0a06;
+    classDef planned fill:#f1f3f4,stroke:#9aa0a6,stroke-width:1.5px,stroke-dasharray:5 4,color:#5f6368;
+
+    CSV["Insurer CSVs — 4 formats"]:::proc
+    NORM["Normalizers — registry / strategy"]:::proc
+    FEEDS[("insurer_commission_feeds")]:::store
+    MASTER[("policies · sales · crm")]:::store
+    ENG["Reconciliation engine — match on policy_no"]:::proc
+    RES[("reconciliation_results")]:::store
+    DOCS["Document intelligence — LLM extract + validate"]:::proc
+    DET["Detection — rule detectors + anomaly net"]:::proc
+    GATE{"validate_action — confirmed? · real reason? · above threshold?"}:::gate
+    ACT["Remediation — claim / rebilling (idempotent)"]:::proc
+    CLAIMS[("commission_claims")]:::store
+    ESC[("escalations — human queue")]:::store
+    AUDIT[("audit_log — SHA-256 of every action")]:::store
+
+    CSV --> NORM --> FEEDS
+    MASTER --> ENG
+    FEEDS --> ENG
+    ENG --> RES --> DET
+    DOCS -. supporting evidence .-> DET
+    DET --> GATE
+    GATE -- pass --> ACT --> CLAIMS
+    GATE -- "high-value / blocked" --> ESC
+    ACT --> AUDIT
+    GATE --> AUDIT
+
+    subgraph PLANNED [" Planned — not built "]
+        direction TB
+        GRAPH["LangGraph orchestration"]:::planned
+        API["FastAPI surface — stub today"]:::planned
+        UI["Frontend"]:::planned
+        GRAPH --> API --> UI
     end
 
-    RES -.-> DET["Detection layer"]
-    DET -.-> DOC["Document intelligence"]
-    DOC -.-> ACT["Gated actions"]
-    ACT -.-> GRAPH["LangGraph orchestration"]
-    GRAPH -.-> API["FastAPI"]
-    API -.-> UI["Frontend"]
-
-    classDef planned stroke:#999,stroke-dasharray:5 5,color:#999,fill:#f7f7f7;
-    class DET,DOC,ACT,GRAPH,API,UI planned;
+    CLAIMS -.-> GRAPH
+    ESC -.-> GRAPH
 ```
 
-Solid = built. Dashed/grey = planned, not implemented.
+**Legend** — 🟦 process · 🟧 data store · 🟥 decision gate · ⬜ planned (dashed
+border). Read top → bottom; solid arrows are built, dashed arrows reach into the
+planned layers.
 
 ## The core problem, in one table
 
