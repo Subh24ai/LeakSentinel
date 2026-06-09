@@ -23,13 +23,28 @@ sometimes as a rate to apply, and policy references that are sometimes exact
 and sometimes buried inside a longer string — so before anything can be matched
 on `policy_no`, every feed has to be normalized into one canonical shape.
 
+## Design principles
+
+**The LLM never decides whether to move money.** It reads documents — rasterised
+PDFs in, structured JSON with per-field confidence out — and nothing else.
+*Every* financial judgement (is this a leak? how much? do we claim it, escalate
+it, or refuse?) is made by deterministic, auditable rules and gates, and every
+money-moving side effect is idempotent and written to an immutable audit log.
+The LangGraph routing is likewise deterministic, not LLM-driven. So the
+"intelligence" is confined to perception; *action* is governed code you can
+re-derive by hand and defend to an insurer.
+
+That split is deliberate: it's the difference between a GPT wrapper and a system
+that takes **governed** action.
+
 ## Current status
 
-Built end-to-end from ingestion through the gated-actions layer:
+**Complete end-to-end**, all backed by tests:
 **ingestion → reconciliation → detection → document intelligence →
-remediation / escalation**, all backed by tests. Only the agent orchestration,
-the full API surface, and a frontend remain **not built yet**; these are clearly
-marked below.
+decision → remediation / escalation**, orchestrated as a single LangGraph
+pipeline, exposed over an **async FastAPI** surface and driven from a
+**React + Vite + TypeScript** operational dashboard. Only optional hardening
+(e.g. an AWS deployment) remains — the system runs locally today, front to back.
 
 ### Done
 
@@ -56,84 +71,125 @@ marked below.
   The core leak query is kept in **both** raw SQL and SQLAlchemy form.
 - **Precision/recall tests** — the engine's output is asserted to match the
   oracle exactly (any invented or missed leak fails the build).
-- **Detection layer** (`detection/rules.py` + `detection/anomaly.py`) —
-  explainable rule detectors (missing commission, underpaid-below-rate,
-  duplicate payment, 1+1 renewal-not-provisioned, rounding-delta) emitting
-  `reason_code` + `severity` + a plain-English explanation, plus a secondary
-  Isolation Forest anomaly net for novel patterns that never overrides a rule.
-  Asserted against the oracle in `test_detection.py`.
+- **Detection layer** (`detection/rules.py` + `detection/anomaly.py`) — **5
+  explainable rule detectors** (missing commission, underpaid-below-rate,
+  duplicate payment, **1+1 renewal-not-provisioned**, rounding-delta), each
+  emitting a `reason_code` + `severity` + a plain-English explanation a human can
+  re-derive and put in a dispute. A **secondary Isolation Forest** flags novel
+  outliers the rules don't yet encode, but only reports policies the rules
+  *didn't* cover and never overrides a rule — rules-first, by design, because
+  finance acts on defensible reasons, not on anomaly scores. Asserted against the
+  oracle in `test_detection.py`.
 - **Document intelligence** (`documents/extractor.py`,
-  `scripts/generate_documents.py`, `make gen-docs` / `make extract-doc`) —
-  generate synthetic insurer PDFs (one with a planted premium mismatch), extract
-  structured fields with the LLM, and validate them against ground truth
-  (`test_documents.py`).
+  `scripts/generate_documents.py`, `make gen-docs` / `make extract-doc`) — a
+  **vision-LLM** reads a rasterised statement PDF and returns **structured JSON
+  with per-field confidence**; any field below the confidence threshold routes
+  the whole extraction to **`HUMAN_REVIEW`**. `validate()` then joins the
+  extracted fields against the `policies` table and flags each divergence with a
+  **`FIELD_MISMATCH`** reason code, naming the offending field. The LLM only
+  *reads*; it takes no financial action. Tests **mock the vision call** (fully
+  offline, deterministic — `test_documents.py`); the live path
+  (`make extract-doc`) needs a real LLM **API key**.
 - **Gated actions** (`actions/`, `scripts/run_actions.py`) — remediation on
   confirmed leaks behind three tested safety properties: **gated**
   (`validate_action` blocks unless the finding is a confirmed open leak with a
-  real reason code above `MIN_CLAIM_THRESHOLD`), **idempotent** (SHA-256 key of
-  `policy_no|reason_code|amount`, so a retry returns the existing claim and never
-  double-pays), and **audited** (every action *and* every block appends a hashed
-  `audit_log` row). High-value or non-trivially-blocked findings route to a human
-  `escalations` queue; the insurer/CRM call sits behind a swappable
-  `ExternalClaimsAPI` stub. Covered by `test_actions.py`. The whole suite is 64
-  tests.
+  real reason code above `MIN_CLAIM_THRESHOLD`), **idempotent** (DB-enforced:
+  SHA-256 key of `policy_no|reason_code|amount` with a `UNIQUE` constraint, so a
+  retry returns the existing claim and never double-pays), and **audited** (every
+  action *and* every blocked attempt appends a SHA-256-hashed `audit_log` row).
+  High-value findings **short-circuit straight to a human** before any action is
+  attempted; gate-failing findings land on the `escalations` queue. The
+  insurer/CRM call sits behind a swappable `ExternalClaimsAPI` stub. Covered by
+  `test_actions.py`.
+- **LangGraph orchestration** (`graph/`, `make pipeline`) — the whole thing wired
+  as one graph over a typed pydantic `ReconciliationState`: **Intake → Reconcile
+  → Detect → Decide → Remediate | Escalate → Finalize**. Routing is
+  **deterministic** (a `Decide` node tags each finding using the *same* predicate
+  the action gate applies — not an LLM), so re-runs are reproducible. **LangSmith
+  tracing** turns on when `LANGSMITH_API_KEY` is set and degrades to a single log
+  line when it isn't. End-to-end test (`test_pipeline.py`) asserts the run
+  reconciles with the oracle — every planted MISSING_COMMISSION becomes a claim
+  or an escalation, none lost.
+- **API** (`api/`, `make run`) — an **async FastAPI** surface over the pipeline:
+  `POST /reconcile` (runs the graph, returns the typed summary + conservation
+  check), `GET /leaks` (filterable by status / insurer / reason_code / severity,
+  each item enriched with the explanation + ₹ amount), `GET /leaks/{policy_no}`
+  (recon + finding + actions taken), `GET /claims`, `GET /escalations`,
+  `GET /audit`, and `GET /metrics` (dashboard aggregates). Every response is a
+  **Pydantic v2** model; **money is a fixed-2dp string** (never a float); blocking
+  DB/graph work is offloaded to a threadpool. **CORS** is enabled for the
+  frontend, and **Swagger UI** is at `/docs`. Covered by async httpx tests in
+  `test_api.py`. **The whole suite is 79 tests.**
+- **Frontend** (`frontend/`) — a **React + Vite + TypeScript** operational-
+  intelligence dashboard that consumes the live API (no mock data): a **Dashboard**
+  with the headline ₹-at-risk / ₹-recovered figures, bar charts, the disposition
+  breakdown, and a **Run reconciliation** button; a **Leaks** table with working
+  filters and a click-through **detail view**; and an **Audit & Escalations** view
+  with **BLOCKED rows highlighted** and the human queue. One typed API client,
+  money rendered from the string (never parsed to float), loading/error states
+  throughout. See [`frontend/README.md`](frontend/README.md) to run it.
 
-### Planned (NOT built)
+### Planned (optional hardening)
 
-- **LangGraph orchestration** — tie detection + documents + actions into an agent.
-- **API** — FastAPI surface (only a health/metadata stub exists today).
-- **Frontend** — none.
+- **Deployment** — containerised AWS deploy (e.g. ECS/Fargate + RDS) and CI. The
+  system is feature-complete and runs locally end-to-end today; this is operational
+  hardening, not missing functionality.
 
 ## Pipeline (as built)
 
 ```mermaid
-%%{init: {'theme':'base','themeVariables':{'fontSize':'16px'},'flowchart':{'nodeSpacing':45,'rankSpacing':50,'curve':'basis'}}}%%
+%%{init: {'theme':'base','themeVariables':{'fontSize':'16px'},'flowchart':{'nodeSpacing':45,'rankSpacing':48,'curve':'basis'}}}%%
 flowchart TB
     classDef proc    fill:#e8f0fe,stroke:#1a73e8,stroke-width:1.5px,color:#0b2545;
     classDef store   fill:#fff4e5,stroke:#f59e0b,stroke-width:1.5px,color:#5b3b00;
     classDef gate    fill:#fde8e8,stroke:#d93025,stroke-width:1.5px,color:#5c0a06;
-    classDef planned fill:#f1f3f4,stroke:#9aa0a6,stroke-width:1.5px,stroke-dasharray:5 4,color:#5f6368;
 
-    CSV["Insurer CSVs — 4 formats"]:::proc
-    NORM["Normalizers — registry / strategy"]:::proc
-    FEEDS[("insurer_commission_feeds")]:::store
-    MASTER[("policies · sales · crm")]:::store
-    ENG["Reconciliation engine — match on policy_no"]:::proc
-    RES[("reconciliation_results")]:::store
-    DOCS["Document intelligence — LLM extract + validate"]:::proc
-    DET["Detection — rule detectors + anomaly net"]:::proc
-    GATE{"validate_action — confirmed? · real reason? · above threshold?"}:::gate
-    ACT["Remediation — claim / rebilling (idempotent)"]:::proc
-    CLAIMS[("commission_claims")]:::store
-    ESC[("escalations — human queue")]:::store
-    AUDIT[("audit_log — SHA-256 of every action")]:::store
+    DOCS["Document intelligence (vision-LLM)<br/>PDF → JSON + confidence → HUMAN_REVIEW → FIELD_MISMATCH"]:::proc
 
-    CSV --> NORM --> FEEDS
-    MASTER --> ENG
-    FEEDS --> ENG
-    ENG --> RES --> DET
-    DOCS -. supporting evidence .-> DET
-    DET --> GATE
-    GATE -- pass --> ACT --> CLAIMS
-    GATE -- "high-value / blocked" --> ESC
-    ACT --> AUDIT
-    GATE --> AUDIT
-
-    subgraph PLANNED [" Planned — not built "]
+    subgraph PIPE["LangGraph pipeline — deterministic routing (built)"]
         direction TB
-        GRAPH["LangGraph orchestration"]:::planned
-        API["FastAPI surface — stub today"]:::planned
-        UI["Frontend"]:::planned
-        GRAPH --> API --> UI
+        INTAKE["Intake — load + normalize 4 insurer feeds"]:::proc
+        RECON["Reconcile — engine: match on policy_no"]:::proc
+        DETECT["Detect — 5 rule detectors + Isolation Forest"]:::proc
+        DECIDE{"Decide — confirmed leak? · amount vs. thresholds?"}:::gate
+        REMED["Remediate — gated · idempotent · audited<br/>claim / rebill"]:::proc
+        ESCAL["Escalate — high-value / gate-fail → human"]:::proc
+        FINAL["Finalize — end-to-end summary"]:::proc
+
+        INTAKE --> RECON --> DETECT --> DECIDE
+        DECIDE -- "confirmed, below threshold" --> REMED
+        DECIDE -- "high-value / gate-fail" --> ESCAL
+        DECIDE -- "clean" --> FINAL
+        REMED --> FINAL
+        ESCAL --> FINAL
     end
 
-    CLAIMS -.-> GRAPH
-    ESC -.-> GRAPH
+    DOCS -. supporting evidence .-> DETECT
+
+    CLAIMS[("commission_claims")]:::store
+    ESCQ[("escalations — human queue")]:::store
+    AUDIT[("audit_log — SHA-256, incl. blocked attempts")]:::store
+    REMED --> CLAIMS
+    REMED --> AUDIT
+    ESCAL --> ESCQ
+    ESCAL --> AUDIT
+
+    subgraph DELIVERY ["Delivery layer (built)"]
+        direction TB
+        API["Async FastAPI — /reconcile · /leaks · /metrics · /docs"]:::proc
+        UI["React + Vite dashboard — live, no mock data"]:::proc
+        API --> UI
+    end
+
+    FINAL --> API
+    CLAIMS --> API
+    ESCQ --> API
+    AUDIT --> API
 ```
 
-**Legend** — 🟦 process · 🟧 data store · 🟥 decision gate · ⬜ planned (dashed
-border). Read top → bottom; solid arrows are built, dashed arrows reach into the
-planned layers.
+**Legend** — 🟦 process · 🟧 data store · 🟥 decision / gate. Read top → bottom;
+everything is built and runs locally end-to-end. The LLM (top) only *reads*
+documents; every financial decision lives in the deterministic gate.
 
 ## The core problem, in one table
 
@@ -152,11 +208,16 @@ normalized to a single `PaymentStatus` enum.
 
 ## Tech stack
 
-Python 3.11+, SQLAlchemy 2 + psycopg (Postgres), pydantic v2, pandas,
-scikit-learn, pytest. FastAPI is scaffolded; LangGraph is a declared dependency
-but not yet used.
+**Backend** — Python 3.11+, SQLAlchemy 2 + psycopg (Postgres), pydantic v2,
+pandas, scikit-learn, **LangGraph** (orchestration) with optional **LangSmith**
+tracing, a **vision LLM** (Anthropic Claude / Groq, via LangChain) for document
+extraction, and **async FastAPI** + uvicorn for the HTTP surface. pytest (incl.
+async httpx) throughout.
 
-## Run what exists
+**Frontend** — **React + Vite + TypeScript**, a typed `fetch` API client, no UI
+framework dependency (hand-written design system). See `frontend/README.md`.
+
+## Run it end-to-end
 
 ```bash
 # 0. Install (editable, with dev extras) into a Python 3.11+ venv
@@ -165,21 +226,20 @@ make install
 # 1. Start Postgres (host port 5433 — 5432 is often already taken)
 docker compose up -d postgres
 
-# 2. Create the schema
-make db-recreate
-
-# 3. Generate synthetic data + load dealers/sales/policies/crm into Postgres,
-#    write the 4 insurer CSVs and ground_truth.json
-#    (NOTE: this also resets the schema, so it's safe to run on its own)
+# 2. Generate synthetic data + load dealers/sales/policies/crm into Postgres,
+#    write the 4 insurer CSVs and ground_truth.json (also (re)creates the schema)
 make gen-data
 
-# 4. Normalize the 4 insurer CSVs into insurer_commission_feeds
+# 3. Normalize the 4 insurer CSVs into insurer_commission_feeds
 make ingest
 
-# 5. Reconcile and print the confusion summary
+# 4. Reconcile and print the confusion summary
 make reconcile
 
-# 6. Run the test suite (includes the precision/recall backbone)
+# 5. Run the WHOLE LangGraph pipeline end-to-end and print the summary
+make pipeline
+
+# 6. Run the test suite (79 tests, incl. the precision/recall + end-to-end backbones)
 make test
 ```
 
@@ -200,11 +260,72 @@ TOTAL                      200       200
 EXACT MATCH — zero false positives/negatives.
 ```
 
-`ROUNDING_DELTA` and `RENEWAL_1PLUS1_NOT_PROVISIONED` policies are planted in
-the data but read as `MATCHED` here on purpose — they are not commission-amount
-mismatches on a single feed line, and belong to the (planned) detection layer.
+`ROUNDING_DELTA` and `RENEWAL_1PLUS1_NOT_PROVISIONED` policies read as `MATCHED`
+at the *reconciliation* stage on purpose — they are not commission-amount
+mismatches on a single feed line — and are caught one stage later by the
+**detection layer** (the rounding-delta and 1+1 renewal detectors).
+
+## Pipeline output
+
+`make pipeline` runs Intake → Reconcile → Detect → Decide → Remediate | Escalate
+→ Finalize over the synthetic data and prints the end-to-end summary:
+
+```
+============================================================
+  LeakSentinel — end-to-end pipeline summary
+============================================================
+  Policies processed       : 200
+
+  Leaks detected by reason_code:
+    ANOMALY_UNCLASSIFIED                  3
+    DUPLICATE_PAYMENT                     7
+    MISSING_COMMISSION                    7
+    RENEWAL_1PLUS1_NOT_PROVISIONED        7
+    UNDERPAID_BELOW_RATE                  7
+    (informational / rounding)            7
+
+  Disposition:
+    Auto-remediated          : 20
+    Escalated to human queue : 10
+    Below claim threshold    : 1
+
+  Money:
+    Total at risk            : ₹7736.14
+    Total claimed back       : ₹2206.76
+============================================================
+  Conservation: 31/31 actionable findings accounted for — OK.
+```
+
+31 actionable leaks (the 28 planted rule leaks + 3 novel anomalies): **20
+auto-remediated** (7 missing + 6 underpaid claims + 7 duplicate rebills), **10
+escalated** (7 renewal obligations + 3 anomalies for human review), and **1**
+underpaid shortfall **below the claim threshold**. The conservation line is the
+guarantee that *nothing detected is silently dropped* — every actionable finding
+ends in exactly one bucket. (The 7 rounding deltas are informational, not
+actionable.)
+
+## Run the full stack
+
+Once the data is seeded (steps 0–2 above), run the API and the dashboard in
+**two terminals**:
+
+```bash
+# Terminal 1 — backend API (FastAPI on http://localhost:8000, Swagger at /docs)
+make run
+
+# Terminal 2 — frontend dashboard (Vite on http://localhost:5173)
+cd frontend
+npm install        # first time only
+npm run dev
+```
+
+Open **http://localhost:5173** and click **Run reconciliation** on the Dashboard
+to populate claims, escalations, and the audit log — then browse the Leaks table
+and the Audit & Escalations view. (CORS for `:5173` is already enabled on the
+API.) Full frontend details: [`frontend/README.md`](frontend/README.md).
 
 ## Make targets
 
 `make help` lists everything (install, db-up/down/reset, db-init/recreate,
-gen-data, ingest, reconcile, run, test, lint, clean).
+gen-data, ingest, reconcile, **pipeline**, run, gen-docs, extract-doc, test,
+lint, clean).
