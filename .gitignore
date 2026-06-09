@@ -1,0 +1,42 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.Python
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Data — keep the synthetic/ folder but ignore generated artifacts
+data/synthetic/*.csv
+data/synthetic/*.xlsx
+data/synthetic/*.parquet
+!data/synthetic/.gitkeep
+
+# Postgres volume (if mounted locally)
+.pgdata/

@@ -1,0 +1,3633 @@
+{
+  "generated_at": "2026-06-09T08:27:37",
+  "seed": 42,
+  "n_policies": 200,
+  "scenario_counts": {
+    "MISSING_COMMISSION": 7,
+    "UNDERPAID": 7,
+    "DUPLICATE": 7,
+    "RENEWAL_1PLUS1_NOT_PROVISIONED": 7,
+    "ROUNDING_DELTA": 7,
+    "CLEAN": 165
+  },
+  "feed_row_counts": {
+    "icici_lombard_feed.csv": 51,
+    "bajaj_feed.csv": 50,
+    "digit_feed.csv": 46,
+    "tata_aig_feed.csv": 53
+  },
+  "feed_formats": {
+    "ICICI Lombard": {
+      "file": "icici_lombard_feed.csv",
+      "commission_mode": "absolute",
+      "date_format": "DD/MM/YYYY",
+      "ref_mode": "exact"
+    },
+    "Bajaj": {
+      "file": "bajaj_feed.csv",
+      "commission_mode": "rate_pct",
+      "date_format": "YYYY-MM-DD",
+      "ref_mode": "embedded"
+    },
+    "Digit": {
+      "file": "digit_feed.csv",
+      "commission_mode": "absolute",
+      "date_format": "epoch_seconds",
+      "ref_mode": "embedded"
+    },
+    "Tata AIG": {
+      "file": "tata_aig_feed.csv",
+      "commission_mode": "rate_pct",
+      "date_format": "DD-Mon-YYYY",
+      "ref_mode": "exact"
+    }
+  },
+  "policies": {
+    "IL-TW-100001": {
+      "scenario": "DUPLICATE",
+      "insurer": "ICICI Lombard",
+      "premium": 1693.84,
+      "expected_rate": 0.1218,
+      "expected_commission": 206.31,
+      "paid_entries": [
+        206.31,
+        206.31
+      ],
+      "raw_refs": [
+        "IL-TW-100001",
+        "IL-TW-100001"
+      ],
+      "issued_date": "2026-03-07",
+      "paid_date": "2026-04-25",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100002": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2367.61,
+      "expected_rate": 0.1496,
+      "expected_commission": 354.19,
+      "paid_entries": [
+        354.19
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100002/DL"
+      ],
+      "issued_date": "2026-01-18",
+      "paid_date": "2026-01-30",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100003": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2544.99,
+      "expected_rate": 0.1362,
+      "expected_commission": 346.63,
+      "paid_entries": [
+        346.63
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100003-TW"
+      ],
+      "issued_date": "2025-12-12",
+      "paid_date": "2026-01-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100004": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1234.58,
+      "expected_rate": 0.1342,
+      "expected_commission": 165.68,
+      "paid_entries": [
+        165.68
+      ],
+      "raw_refs": [
+        "TA-TW-100004"
+      ],
+      "issued_date": "2026-04-20",
+      "paid_date": "2026-06-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100005": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1590.36,
+      "expected_rate": 0.1326,
+      "expected_commission": 210.88,
+      "paid_entries": [
+        210.88
+      ],
+      "raw_refs": [
+        "IL-TW-100005"
+      ],
+      "issued_date": "2026-04-24",
+      "paid_date": "2026-05-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "BJ-TW-100006": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2829.05,
+      "expected_rate": 0.1784,
+      "expected_commission": 504.7,
+      "paid_entries": [
+        504.7
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100006/RJ"
+      ],
+      "issued_date": "2026-01-26",
+      "paid_date": "2026-02-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100007": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2676.27,
+      "expected_rate": 0.134,
+      "expected_commission": 358.62,
+      "paid_entries": [
+        358.62
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100007-TW"
+      ],
+      "issued_date": "2025-10-16",
+      "paid_date": "2025-11-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100008": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1927.95,
+      "expected_rate": 0.1748,
+      "expected_commission": 337.01,
+      "paid_entries": [
+        337.01
+      ],
+      "raw_refs": [
+        "TA-TW-100008"
+      ],
+      "issued_date": "2025-08-12",
+      "paid_date": "2025-09-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "IL-TW-100009": {
+      "scenario": "UNDERPAID",
+      "insurer": "ICICI Lombard",
+      "premium": 2104.89,
+      "expected_rate": 0.1675,
+      "expected_commission": 352.57,
+      "paid_entries": [
+        247.15
+      ],
+      "raw_refs": [
+        "IL-TW-100009"
+      ],
+      "issued_date": "2025-06-25",
+      "paid_date": "2025-07-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100010": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1530.35,
+      "expected_rate": 0.1576,
+      "expected_commission": 241.18,
+      "paid_entries": [
+        241.18
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100010/TN"
+      ],
+      "issued_date": "2025-07-31",
+      "paid_date": "2025-09-22",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100011": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1597.83,
+      "expected_rate": 0.1097,
+      "expected_commission": 175.28,
+      "paid_entries": [
+        175.28
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100011-TW"
+      ],
+      "issued_date": "2026-04-25",
+      "paid_date": "2026-05-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100012": {
+      "scenario": "UNDERPAID",
+      "insurer": "Tata AIG",
+      "premium": 2606.02,
+      "expected_rate": 0.1868,
+      "expected_commission": 486.8,
+      "paid_entries": [
+        383.11
+      ],
+      "raw_refs": [
+        "TA-TW-100012"
+      ],
+      "issued_date": "2025-10-01",
+      "paid_date": "2025-10-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100013": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1905.35,
+      "expected_rate": 0.1564,
+      "expected_commission": 298.0,
+      "paid_entries": [
+        298.0
+      ],
+      "raw_refs": [
+        "IL-TW-100013"
+      ],
+      "issued_date": "2026-03-10",
+      "paid_date": "2026-04-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100014": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1345.81,
+      "expected_rate": 0.1438,
+      "expected_commission": 193.53,
+      "paid_entries": [
+        193.53
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100014/TN"
+      ],
+      "issued_date": "2026-01-14",
+      "paid_date": "2026-02-02",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100015": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Digit",
+      "premium": 984.8,
+      "expected_rate": 0.1019,
+      "expected_commission": 100.35,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2026-04-20",
+      "paid_date": "2026-05-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "TA-TW-100016": {
+      "scenario": "DUPLICATE",
+      "insurer": "Tata AIG",
+      "premium": 2419.24,
+      "expected_rate": 0.1784,
+      "expected_commission": 431.59,
+      "paid_entries": [
+        431.59,
+        431.59
+      ],
+      "raw_refs": [
+        "TA-TW-100016",
+        "TA-TW-100016"
+      ],
+      "issued_date": "2025-08-10",
+      "paid_date": "2025-09-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "IL-TW-100017": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1655.24,
+      "expected_rate": 0.1404,
+      "expected_commission": 232.4,
+      "paid_entries": [
+        232.4
+      ],
+      "raw_refs": [
+        "IL-TW-100017"
+      ],
+      "issued_date": "2025-06-28",
+      "paid_date": "2025-07-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "BJ-TW-100018": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1349.61,
+      "expected_rate": 0.1954,
+      "expected_commission": 263.71,
+      "paid_entries": [
+        263.71
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100018/DL"
+      ],
+      "issued_date": "2025-09-04",
+      "paid_date": "2025-10-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "DG-TW-100019": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1812.72,
+      "expected_rate": 0.1519,
+      "expected_commission": 275.35,
+      "paid_entries": [
+        275.35
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100019-TW"
+      ],
+      "issued_date": "2025-08-28",
+      "paid_date": "2025-10-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "TA-TW-100020": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1229.8,
+      "expected_rate": 0.1431,
+      "expected_commission": 175.98,
+      "paid_entries": [
+        175.98
+      ],
+      "raw_refs": [
+        "TA-TW-100020"
+      ],
+      "issued_date": "2026-01-06",
+      "paid_date": "2026-01-27",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100021": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2688.77,
+      "expected_rate": 0.1519,
+      "expected_commission": 408.42,
+      "paid_entries": [
+        408.42
+      ],
+      "raw_refs": [
+        "IL-TW-100021"
+      ],
+      "issued_date": "2026-03-30",
+      "paid_date": "2026-05-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100022": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2039.04,
+      "expected_rate": 0.1772,
+      "expected_commission": 361.32,
+      "paid_entries": [
+        361.32
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100022/TN"
+      ],
+      "issued_date": "2025-08-02",
+      "paid_date": "2025-09-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100023": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1641.57,
+      "expected_rate": 0.1403,
+      "expected_commission": 230.31,
+      "paid_entries": [
+        230.31
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100023-TW"
+      ],
+      "issued_date": "2025-11-09",
+      "paid_date": "2025-12-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100024": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "Tata AIG",
+      "premium": 1380.4,
+      "expected_rate": 0.186,
+      "expected_commission": 256.75,
+      "paid_entries": [
+        256.75
+      ],
+      "raw_refs": [
+        "TA-TW-100024"
+      ],
+      "issued_date": "2026-03-04",
+      "paid_date": "2026-04-17",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100025": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "ICICI Lombard",
+      "premium": 1057.17,
+      "expected_rate": 0.1727,
+      "expected_commission": 182.57,
+      "paid_entries": [
+        182.57
+      ],
+      "raw_refs": [
+        "IL-TW-100025"
+      ],
+      "issued_date": "2025-06-07",
+      "paid_date": "2025-07-31",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100026": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Bajaj",
+      "premium": 2118.48,
+      "expected_rate": 0.1558,
+      "expected_commission": 330.06,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2025-11-24",
+      "paid_date": "2026-01-18",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100027": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2124.23,
+      "expected_rate": 0.1157,
+      "expected_commission": 245.77,
+      "paid_entries": [
+        245.77
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100027-TW"
+      ],
+      "issued_date": "2025-06-04",
+      "paid_date": "2025-06-24",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Ather Space"
+    },
+    "TA-TW-100028": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2015.02,
+      "expected_rate": 0.1389,
+      "expected_commission": 279.89,
+      "paid_entries": [
+        279.89
+      ],
+      "raw_refs": [
+        "TA-TW-100028"
+      ],
+      "issued_date": "2025-08-16",
+      "paid_date": "2025-09-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100029": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2618.27,
+      "expected_rate": 0.1444,
+      "expected_commission": 378.08,
+      "paid_entries": [
+        378.08
+      ],
+      "raw_refs": [
+        "IL-TW-100029"
+      ],
+      "issued_date": "2025-07-25",
+      "paid_date": "2025-09-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100030": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1168.4,
+      "expected_rate": 0.1821,
+      "expected_commission": 212.77,
+      "paid_entries": [
+        212.77
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100030/DL"
+      ],
+      "issued_date": "2025-12-29",
+      "paid_date": "2026-01-27",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "DG-TW-100031": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2170.07,
+      "expected_rate": 0.1239,
+      "expected_commission": 268.87,
+      "paid_entries": [
+        268.87
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100031-TW"
+      ],
+      "issued_date": "2025-09-26",
+      "paid_date": "2025-10-09",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100032": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2011.18,
+      "expected_rate": 0.189,
+      "expected_commission": 380.11,
+      "paid_entries": [
+        380.11
+      ],
+      "raw_refs": [
+        "TA-TW-100032"
+      ],
+      "issued_date": "2025-08-01",
+      "paid_date": "2025-08-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100033": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1230.16,
+      "expected_rate": 0.1227,
+      "expected_commission": 150.94,
+      "paid_entries": [
+        150.94
+      ],
+      "raw_refs": [
+        "IL-TW-100033"
+      ],
+      "issued_date": "2025-08-02",
+      "paid_date": "2025-09-19",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100034": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1477.83,
+      "expected_rate": 0.1909,
+      "expected_commission": 282.12,
+      "paid_entries": [
+        282.12
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100034/MH"
+      ],
+      "issued_date": "2025-07-08",
+      "paid_date": "2025-08-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100035": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2730.73,
+      "expected_rate": 0.1406,
+      "expected_commission": 383.94,
+      "paid_entries": [
+        383.94
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100035-TW"
+      ],
+      "issued_date": "2025-09-10",
+      "paid_date": "2025-11-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "TA-TW-100036": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2063.32,
+      "expected_rate": 0.1493,
+      "expected_commission": 308.05,
+      "paid_entries": [
+        308.05
+      ],
+      "raw_refs": [
+        "TA-TW-100036"
+      ],
+      "issued_date": "2025-09-19",
+      "paid_date": "2025-11-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "IL-TW-100037": {
+      "scenario": "DUPLICATE",
+      "insurer": "ICICI Lombard",
+      "premium": 2486.85,
+      "expected_rate": 0.1651,
+      "expected_commission": 410.58,
+      "paid_entries": [
+        410.58,
+        410.58
+      ],
+      "raw_refs": [
+        "IL-TW-100037",
+        "IL-TW-100037"
+      ],
+      "issued_date": "2025-10-26",
+      "paid_date": "2025-11-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "BJ-TW-100038": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1678.88,
+      "expected_rate": 0.1778,
+      "expected_commission": 298.5,
+      "paid_entries": [
+        298.5
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100038/DL"
+      ],
+      "issued_date": "2026-04-09",
+      "paid_date": "2026-05-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100039": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1287.68,
+      "expected_rate": 0.1482,
+      "expected_commission": 190.83,
+      "paid_entries": [
+        190.83
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100039-TW"
+      ],
+      "issued_date": "2025-06-03",
+      "paid_date": "2025-07-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100040": {
+      "scenario": "DUPLICATE",
+      "insurer": "Tata AIG",
+      "premium": 2075.3,
+      "expected_rate": 0.1732,
+      "expected_commission": 359.44,
+      "paid_entries": [
+        359.44,
+        359.44
+      ],
+      "raw_refs": [
+        "TA-TW-100040",
+        "TA-TW-100040"
+      ],
+      "issued_date": "2026-03-01",
+      "paid_date": "2026-04-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100041": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "ICICI Lombard",
+      "premium": 1819.19,
+      "expected_rate": 0.1344,
+      "expected_commission": 244.5,
+      "paid_entries": [
+        244.5
+      ],
+      "raw_refs": [
+        "IL-TW-100041"
+      ],
+      "issued_date": "2025-10-07",
+      "paid_date": "2025-11-21",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100042": {
+      "scenario": "DUPLICATE",
+      "insurer": "Bajaj",
+      "premium": 1151.66,
+      "expected_rate": 0.163,
+      "expected_commission": 187.72,
+      "paid_entries": [
+        187.72,
+        187.72
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100042/MH",
+        "BAJAJ/2026/BJ-TW-100042/MH"
+      ],
+      "issued_date": "2026-03-04",
+      "paid_date": "2026-03-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100043": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1263.67,
+      "expected_rate": 0.1252,
+      "expected_commission": 158.21,
+      "paid_entries": [
+        158.21
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100043-TW"
+      ],
+      "issued_date": "2026-01-28",
+      "paid_date": "2026-02-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100044": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1288.84,
+      "expected_rate": 0.1562,
+      "expected_commission": 201.32,
+      "paid_entries": [
+        201.32
+      ],
+      "raw_refs": [
+        "TA-TW-100044"
+      ],
+      "issued_date": "2026-01-02",
+      "paid_date": "2026-02-14",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100045": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2033.79,
+      "expected_rate": 0.1598,
+      "expected_commission": 325.0,
+      "paid_entries": [
+        325.0
+      ],
+      "raw_refs": [
+        "IL-TW-100045"
+      ],
+      "issued_date": "2026-04-15",
+      "paid_date": "2026-05-22",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100046": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1759.4,
+      "expected_rate": 0.1603,
+      "expected_commission": 282.03,
+      "paid_entries": [
+        282.03
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100046/RJ"
+      ],
+      "issued_date": "2025-12-14",
+      "paid_date": "2026-01-08",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "DG-TW-100047": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2150.29,
+      "expected_rate": 0.1469,
+      "expected_commission": 315.88,
+      "paid_entries": [
+        315.88
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100047-TW"
+      ],
+      "issued_date": "2025-06-29",
+      "paid_date": "2025-07-25",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100048": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2745.51,
+      "expected_rate": 0.1579,
+      "expected_commission": 433.52,
+      "paid_entries": [
+        433.52
+      ],
+      "raw_refs": [
+        "TA-TW-100048"
+      ],
+      "issued_date": "2026-01-29",
+      "paid_date": "2026-03-18",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100049": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2001.59,
+      "expected_rate": 0.1745,
+      "expected_commission": 349.28,
+      "paid_entries": [
+        349.28
+      ],
+      "raw_refs": [
+        "IL-TW-100049"
+      ],
+      "issued_date": "2025-07-26",
+      "paid_date": "2025-08-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100050": {
+      "scenario": "UNDERPAID",
+      "insurer": "Bajaj",
+      "premium": 2415.27,
+      "expected_rate": 0.1608,
+      "expected_commission": 388.38,
+      "paid_entries": [
+        300.61
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100050/TS"
+      ],
+      "issued_date": "2026-04-04",
+      "paid_date": "2026-05-22",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100051": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2771.58,
+      "expected_rate": 0.1381,
+      "expected_commission": 382.76,
+      "paid_entries": [
+        382.76
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100051-TW"
+      ],
+      "issued_date": "2026-02-06",
+      "paid_date": "2026-03-17",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100052": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2553.43,
+      "expected_rate": 0.1798,
+      "expected_commission": 459.11,
+      "paid_entries": [
+        459.11
+      ],
+      "raw_refs": [
+        "TA-TW-100052"
+      ],
+      "issued_date": "2026-01-12",
+      "paid_date": "2026-02-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100053": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1213.68,
+      "expected_rate": 0.1327,
+      "expected_commission": 161.06,
+      "paid_entries": [
+        161.06
+      ],
+      "raw_refs": [
+        "IL-TW-100053"
+      ],
+      "issued_date": "2025-06-18",
+      "paid_date": "2025-07-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100054": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2290.15,
+      "expected_rate": 0.1693,
+      "expected_commission": 387.72,
+      "paid_entries": [
+        387.72
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100054/KA"
+      ],
+      "issued_date": "2025-09-06",
+      "paid_date": "2025-10-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100055": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1462.41,
+      "expected_rate": 0.1349,
+      "expected_commission": 197.28,
+      "paid_entries": [
+        197.28
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100055-TW"
+      ],
+      "issued_date": "2025-09-25",
+      "paid_date": "2025-10-22",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100056": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1311.08,
+      "expected_rate": 0.1733,
+      "expected_commission": 227.21,
+      "paid_entries": [
+        227.21
+      ],
+      "raw_refs": [
+        "TA-TW-100056"
+      ],
+      "issued_date": "2025-10-19",
+      "paid_date": "2025-11-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100057": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2803.21,
+      "expected_rate": 0.1515,
+      "expected_commission": 424.69,
+      "paid_entries": [
+        424.69
+      ],
+      "raw_refs": [
+        "IL-TW-100057"
+      ],
+      "issued_date": "2026-02-05",
+      "paid_date": "2026-03-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "BJ-TW-100058": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 941.03,
+      "expected_rate": 0.1433,
+      "expected_commission": 134.85,
+      "paid_entries": [
+        134.85
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100058/MH"
+      ],
+      "issued_date": "2025-06-09",
+      "paid_date": "2025-07-08",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100059": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1218.73,
+      "expected_rate": 0.1031,
+      "expected_commission": 125.65,
+      "paid_entries": [
+        125.65
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100059-TW"
+      ],
+      "issued_date": "2026-02-04",
+      "paid_date": "2026-03-09",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "TA-TW-100060": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2837.84,
+      "expected_rate": 0.1371,
+      "expected_commission": 389.07,
+      "paid_entries": [
+        389.07
+      ],
+      "raw_refs": [
+        "TA-TW-100060"
+      ],
+      "issued_date": "2025-08-18",
+      "paid_date": "2025-09-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100061": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "ICICI Lombard",
+      "premium": 1987.26,
+      "expected_rate": 0.1236,
+      "expected_commission": 245.63,
+      "paid_entries": [
+        245.56
+      ],
+      "raw_refs": [
+        "IL-TW-100061"
+      ],
+      "issued_date": "2025-11-03",
+      "paid_date": "2025-12-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100062": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 855.35,
+      "expected_rate": 0.167,
+      "expected_commission": 142.84,
+      "paid_entries": [
+        142.84
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100062/DL"
+      ],
+      "issued_date": "2025-08-28",
+      "paid_date": "2025-09-19",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "DG-TW-100063": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2029.58,
+      "expected_rate": 0.1482,
+      "expected_commission": 300.78,
+      "paid_entries": [
+        300.78
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100063-TW"
+      ],
+      "issued_date": "2025-09-30",
+      "paid_date": "2025-11-21",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "TA-TW-100064": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2435.26,
+      "expected_rate": 0.1657,
+      "expected_commission": 403.52,
+      "paid_entries": [
+        403.52
+      ],
+      "raw_refs": [
+        "TA-TW-100064"
+      ],
+      "issued_date": "2025-07-07",
+      "paid_date": "2025-07-29",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "IL-TW-100065": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1010.88,
+      "expected_rate": 0.1224,
+      "expected_commission": 123.73,
+      "paid_entries": [
+        123.73
+      ],
+      "raw_refs": [
+        "IL-TW-100065"
+      ],
+      "issued_date": "2026-02-15",
+      "paid_date": "2026-03-27",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100066": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2492.84,
+      "expected_rate": 0.1746,
+      "expected_commission": 435.25,
+      "paid_entries": [
+        435.25
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100066/RJ"
+      ],
+      "issued_date": "2026-03-22",
+      "paid_date": "2026-05-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100067": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1666.7,
+      "expected_rate": 0.1193,
+      "expected_commission": 198.84,
+      "paid_entries": [
+        198.84
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100067-TW"
+      ],
+      "issued_date": "2025-07-20",
+      "paid_date": "2025-08-23",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100068": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Tata AIG",
+      "premium": 1026.12,
+      "expected_rate": 0.1451,
+      "expected_commission": 148.89,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2026-03-09",
+      "paid_date": "2026-04-19",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "IL-TW-100069": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2362.89,
+      "expected_rate": 0.1575,
+      "expected_commission": 372.16,
+      "paid_entries": [
+        372.16
+      ],
+      "raw_refs": [
+        "IL-TW-100069"
+      ],
+      "issued_date": "2025-09-07",
+      "paid_date": "2025-10-28",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100070": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2067.74,
+      "expected_rate": 0.1544,
+      "expected_commission": 319.26,
+      "paid_entries": [
+        319.26
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100070/DL"
+      ],
+      "issued_date": "2025-08-02",
+      "paid_date": "2025-09-23",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100071": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2145.42,
+      "expected_rate": 0.1092,
+      "expected_commission": 234.28,
+      "paid_entries": [
+        234.28
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100071-TW"
+      ],
+      "issued_date": "2025-08-01",
+      "paid_date": "2025-08-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100072": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1231.22,
+      "expected_rate": 0.166,
+      "expected_commission": 204.38,
+      "paid_entries": [
+        204.38
+      ],
+      "raw_refs": [
+        "TA-TW-100072"
+      ],
+      "issued_date": "2026-01-21",
+      "paid_date": "2026-02-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100073": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1743.09,
+      "expected_rate": 0.1491,
+      "expected_commission": 259.89,
+      "paid_entries": [
+        259.89
+      ],
+      "raw_refs": [
+        "IL-TW-100073"
+      ],
+      "issued_date": "2025-11-03",
+      "paid_date": "2025-11-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100074": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2562.03,
+      "expected_rate": 0.1646,
+      "expected_commission": 421.71,
+      "paid_entries": [
+        421.71
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100074/TN"
+      ],
+      "issued_date": "2026-03-23",
+      "paid_date": "2026-04-18",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "DG-TW-100075": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2598.38,
+      "expected_rate": 0.1264,
+      "expected_commission": 328.44,
+      "paid_entries": [
+        328.44
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100075-TW"
+      ],
+      "issued_date": "2025-08-06",
+      "paid_date": "2025-08-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100076": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2235.41,
+      "expected_rate": 0.169,
+      "expected_commission": 377.78,
+      "paid_entries": [
+        377.78
+      ],
+      "raw_refs": [
+        "TA-TW-100076"
+      ],
+      "issued_date": "2025-10-16",
+      "paid_date": "2025-12-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100077": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2343.53,
+      "expected_rate": 0.146,
+      "expected_commission": 342.16,
+      "paid_entries": [
+        342.16
+      ],
+      "raw_refs": [
+        "IL-TW-100077"
+      ],
+      "issued_date": "2025-10-01",
+      "paid_date": "2025-10-27",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "BJ-TW-100078": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1436.74,
+      "expected_rate": 0.1625,
+      "expected_commission": 233.47,
+      "paid_entries": [
+        233.47
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100078/RJ"
+      ],
+      "issued_date": "2025-06-26",
+      "paid_date": "2025-07-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "DG-TW-100079": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2216.27,
+      "expected_rate": 0.1299,
+      "expected_commission": 287.89,
+      "paid_entries": [
+        287.89
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100079-TW"
+      ],
+      "issued_date": "2025-07-14",
+      "paid_date": "2025-09-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100080": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "Tata AIG",
+      "premium": 1733.46,
+      "expected_rate": 0.1507,
+      "expected_commission": 261.23,
+      "paid_entries": [
+        261.23
+      ],
+      "raw_refs": [
+        "TA-TW-100080"
+      ],
+      "issued_date": "2025-10-27",
+      "paid_date": "2025-11-12",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "IL-TW-100081": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1612.73,
+      "expected_rate": 0.1415,
+      "expected_commission": 228.2,
+      "paid_entries": [
+        228.2
+      ],
+      "raw_refs": [
+        "IL-TW-100081"
+      ],
+      "issued_date": "2026-02-03",
+      "paid_date": "2026-03-02",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100082": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2340.34,
+      "expected_rate": 0.19,
+      "expected_commission": 444.66,
+      "paid_entries": [
+        444.66
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100082/RJ"
+      ],
+      "issued_date": "2026-03-17",
+      "paid_date": "2026-05-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100083": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2142.68,
+      "expected_rate": 0.1185,
+      "expected_commission": 253.91,
+      "paid_entries": [
+        253.91
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100083-TW"
+      ],
+      "issued_date": "2026-04-18",
+      "paid_date": "2026-06-09",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "TA-TW-100084": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1251.59,
+      "expected_rate": 0.1772,
+      "expected_commission": 221.78,
+      "paid_entries": [
+        221.78
+      ],
+      "raw_refs": [
+        "TA-TW-100084"
+      ],
+      "issued_date": "2025-11-18",
+      "paid_date": "2025-12-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100085": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2775.79,
+      "expected_rate": 0.1284,
+      "expected_commission": 356.41,
+      "paid_entries": [
+        356.41
+      ],
+      "raw_refs": [
+        "IL-TW-100085"
+      ],
+      "issued_date": "2025-11-21",
+      "paid_date": "2026-01-01",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "BJ-TW-100086": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1097.18,
+      "expected_rate": 0.1621,
+      "expected_commission": 177.85,
+      "paid_entries": [
+        177.85
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100086/RJ"
+      ],
+      "issued_date": "2025-06-10",
+      "paid_date": "2025-07-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100087": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1292.73,
+      "expected_rate": 0.1038,
+      "expected_commission": 134.19,
+      "paid_entries": [
+        134.19
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100087-TW"
+      ],
+      "issued_date": "2026-04-16",
+      "paid_date": "2026-06-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "TA-TW-100088": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1044.38,
+      "expected_rate": 0.1832,
+      "expected_commission": 191.33,
+      "paid_entries": [
+        191.33
+      ],
+      "raw_refs": [
+        "TA-TW-100088"
+      ],
+      "issued_date": "2025-11-06",
+      "paid_date": "2025-11-25",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100089": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1666.23,
+      "expected_rate": 0.1771,
+      "expected_commission": 295.09,
+      "paid_entries": [
+        295.09
+      ],
+      "raw_refs": [
+        "IL-TW-100089"
+      ],
+      "issued_date": "2025-07-24",
+      "paid_date": "2025-09-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100090": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2653.39,
+      "expected_rate": 0.1787,
+      "expected_commission": 474.16,
+      "paid_entries": [
+        474.16
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100090/RJ"
+      ],
+      "issued_date": "2025-07-23",
+      "paid_date": "2025-09-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100091": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2423.59,
+      "expected_rate": 0.1146,
+      "expected_commission": 277.74,
+      "paid_entries": [
+        277.74
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100091-TW"
+      ],
+      "issued_date": "2026-04-25",
+      "paid_date": "2026-05-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "TA-TW-100092": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 855.67,
+      "expected_rate": 0.1815,
+      "expected_commission": 155.3,
+      "paid_entries": [
+        155.3
+      ],
+      "raw_refs": [
+        "TA-TW-100092"
+      ],
+      "issued_date": "2025-11-17",
+      "paid_date": "2026-01-06",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Honda BigWing"
+    },
+    "IL-TW-100093": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2027.71,
+      "expected_rate": 0.1209,
+      "expected_commission": 245.15,
+      "paid_entries": [
+        245.15
+      ],
+      "raw_refs": [
+        "IL-TW-100093"
+      ],
+      "issued_date": "2025-06-10",
+      "paid_date": "2025-07-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100094": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2037.33,
+      "expected_rate": 0.1671,
+      "expected_commission": 340.44,
+      "paid_entries": [
+        340.44
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100094/MH"
+      ],
+      "issued_date": "2026-01-18",
+      "paid_date": "2026-03-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100095": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Digit",
+      "premium": 2222.19,
+      "expected_rate": 0.1294,
+      "expected_commission": 287.55,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2026-02-04",
+      "paid_date": "2026-03-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100096": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2839.26,
+      "expected_rate": 0.1618,
+      "expected_commission": 459.39,
+      "paid_entries": [
+        459.39
+      ],
+      "raw_refs": [
+        "TA-TW-100096"
+      ],
+      "issued_date": "2025-10-21",
+      "paid_date": "2025-11-26",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100097": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1527.86,
+      "expected_rate": 0.1472,
+      "expected_commission": 224.9,
+      "paid_entries": [
+        224.9
+      ],
+      "raw_refs": [
+        "IL-TW-100097"
+      ],
+      "issued_date": "2026-01-19",
+      "paid_date": "2026-02-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "BJ-TW-100098": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1032.45,
+      "expected_rate": 0.1451,
+      "expected_commission": 149.81,
+      "paid_entries": [
+        149.81
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100098/RJ"
+      ],
+      "issued_date": "2025-08-21",
+      "paid_date": "2025-09-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100099": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "Digit",
+      "premium": 2732.26,
+      "expected_rate": 0.1254,
+      "expected_commission": 342.63,
+      "paid_entries": [
+        342.63
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100099-TW"
+      ],
+      "issued_date": "2025-12-30",
+      "paid_date": "2026-02-22",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100100": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1550.23,
+      "expected_rate": 0.1634,
+      "expected_commission": 253.31,
+      "paid_entries": [
+        253.31
+      ],
+      "raw_refs": [
+        "TA-TW-100100"
+      ],
+      "issued_date": "2026-02-03",
+      "paid_date": "2026-02-21",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100101": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2693.08,
+      "expected_rate": 0.1411,
+      "expected_commission": 379.99,
+      "paid_entries": [
+        379.99
+      ],
+      "raw_refs": [
+        "IL-TW-100101"
+      ],
+      "issued_date": "2025-09-03",
+      "paid_date": "2025-10-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100102": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1689.66,
+      "expected_rate": 0.1605,
+      "expected_commission": 271.19,
+      "paid_entries": [
+        271.19
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100102/DL"
+      ],
+      "issued_date": "2026-02-28",
+      "paid_date": "2026-04-05",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "DG-TW-100103": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1013.16,
+      "expected_rate": 0.1266,
+      "expected_commission": 128.27,
+      "paid_entries": [
+        128.27
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100103-TW"
+      ],
+      "issued_date": "2025-08-20",
+      "paid_date": "2025-10-14",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100104": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1071.78,
+      "expected_rate": 0.1707,
+      "expected_commission": 182.95,
+      "paid_entries": [
+        182.95
+      ],
+      "raw_refs": [
+        "TA-TW-100104"
+      ],
+      "issued_date": "2025-07-31",
+      "paid_date": "2025-09-08",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "IL-TW-100105": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2740.65,
+      "expected_rate": 0.166,
+      "expected_commission": 454.95,
+      "paid_entries": [
+        454.95
+      ],
+      "raw_refs": [
+        "IL-TW-100105"
+      ],
+      "issued_date": "2025-06-05",
+      "paid_date": "2025-07-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "BJ-TW-100106": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2257.34,
+      "expected_rate": 0.17,
+      "expected_commission": 383.75,
+      "paid_entries": [
+        383.75
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100106/KA"
+      ],
+      "issued_date": "2025-08-09",
+      "paid_date": "2025-09-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "DG-TW-100107": {
+      "scenario": "UNDERPAID",
+      "insurer": "Digit",
+      "premium": 1658.85,
+      "expected_rate": 0.1384,
+      "expected_commission": 229.58,
+      "paid_entries": [
+        163.92
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100107-TW"
+      ],
+      "issued_date": "2025-11-11",
+      "paid_date": "2025-12-29",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100108": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1336.63,
+      "expected_rate": 0.1653,
+      "expected_commission": 220.94,
+      "paid_entries": [
+        220.94
+      ],
+      "raw_refs": [
+        "TA-TW-100108"
+      ],
+      "issued_date": "2025-07-19",
+      "paid_date": "2025-08-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100109": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1869.9,
+      "expected_rate": 0.1744,
+      "expected_commission": 326.11,
+      "paid_entries": [
+        326.11
+      ],
+      "raw_refs": [
+        "IL-TW-100109"
+      ],
+      "issued_date": "2026-02-17",
+      "paid_date": "2026-04-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100110": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1155.74,
+      "expected_rate": 0.1855,
+      "expected_commission": 214.39,
+      "paid_entries": [
+        214.39
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100110/KA"
+      ],
+      "issued_date": "2025-09-11",
+      "paid_date": "2025-10-31",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "DG-TW-100111": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1787.84,
+      "expected_rate": 0.1379,
+      "expected_commission": 246.54,
+      "paid_entries": [
+        246.54
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100111-TW"
+      ],
+      "issued_date": "2025-08-20",
+      "paid_date": "2025-09-05",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "TA-TW-100112": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1587.48,
+      "expected_rate": 0.1472,
+      "expected_commission": 233.68,
+      "paid_entries": [
+        233.68
+      ],
+      "raw_refs": [
+        "TA-TW-100112"
+      ],
+      "issued_date": "2026-01-18",
+      "paid_date": "2026-02-02",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100113": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2060.01,
+      "expected_rate": 0.1501,
+      "expected_commission": 309.21,
+      "paid_entries": [
+        309.21
+      ],
+      "raw_refs": [
+        "IL-TW-100113"
+      ],
+      "issued_date": "2026-03-21",
+      "paid_date": "2026-04-22",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100114": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1898.14,
+      "expected_rate": 0.1766,
+      "expected_commission": 335.21,
+      "paid_entries": [
+        335.21
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100114/TS"
+      ],
+      "issued_date": "2025-10-08",
+      "paid_date": "2025-11-17",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100115": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1965.93,
+      "expected_rate": 0.1232,
+      "expected_commission": 242.2,
+      "paid_entries": [
+        242.2
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100115-TW"
+      ],
+      "issued_date": "2025-07-06",
+      "paid_date": "2025-07-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100116": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2246.96,
+      "expected_rate": 0.1535,
+      "expected_commission": 344.91,
+      "paid_entries": [
+        344.91
+      ],
+      "raw_refs": [
+        "TA-TW-100116"
+      ],
+      "issued_date": "2025-11-29",
+      "paid_date": "2026-01-21",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100117": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1573.66,
+      "expected_rate": 0.1418,
+      "expected_commission": 223.14,
+      "paid_entries": [
+        223.14
+      ],
+      "raw_refs": [
+        "IL-TW-100117"
+      ],
+      "issued_date": "2025-07-21",
+      "paid_date": "2025-09-03",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100118": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1865.38,
+      "expected_rate": 0.1724,
+      "expected_commission": 321.59,
+      "paid_entries": [
+        321.59
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100118/DL"
+      ],
+      "issued_date": "2025-07-12",
+      "paid_date": "2025-07-30",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "DG-TW-100119": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 937.38,
+      "expected_rate": 0.1219,
+      "expected_commission": 114.27,
+      "paid_entries": [
+        114.27
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100119-TW"
+      ],
+      "issued_date": "2025-09-02",
+      "paid_date": "2025-10-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "TA-TW-100120": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "Tata AIG",
+      "premium": 2657.95,
+      "expected_rate": 0.1416,
+      "expected_commission": 376.37,
+      "paid_entries": [
+        376.41
+      ],
+      "raw_refs": [
+        "TA-TW-100120"
+      ],
+      "issued_date": "2025-10-03",
+      "paid_date": "2025-11-14",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "IL-TW-100121": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 954.36,
+      "expected_rate": 0.1488,
+      "expected_commission": 142.01,
+      "paid_entries": [
+        142.01
+      ],
+      "raw_refs": [
+        "IL-TW-100121"
+      ],
+      "issued_date": "2026-04-07",
+      "paid_date": "2026-05-05",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "BJ-TW-100122": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1144.7,
+      "expected_rate": 0.1662,
+      "expected_commission": 190.25,
+      "paid_entries": [
+        190.25
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100122/TN"
+      ],
+      "issued_date": "2025-10-21",
+      "paid_date": "2025-12-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "DG-TW-100123": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2839.05,
+      "expected_rate": 0.1225,
+      "expected_commission": 347.78,
+      "paid_entries": [
+        347.78
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100123-TW"
+      ],
+      "issued_date": "2025-12-10",
+      "paid_date": "2026-01-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100124": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1747.2,
+      "expected_rate": 0.1303,
+      "expected_commission": 227.66,
+      "paid_entries": [
+        227.66
+      ],
+      "raw_refs": [
+        "TA-TW-100124"
+      ],
+      "issued_date": "2026-01-29",
+      "paid_date": "2026-03-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100125": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 945.5,
+      "expected_rate": 0.1452,
+      "expected_commission": 137.29,
+      "paid_entries": [
+        137.29
+      ],
+      "raw_refs": [
+        "IL-TW-100125"
+      ],
+      "issued_date": "2025-10-02",
+      "paid_date": "2025-10-21",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100126": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2079.62,
+      "expected_rate": 0.1544,
+      "expected_commission": 321.09,
+      "paid_entries": [
+        321.09
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100126/MH"
+      ],
+      "issued_date": "2025-10-31",
+      "paid_date": "2025-11-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100127": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2596.66,
+      "expected_rate": 0.1026,
+      "expected_commission": 266.42,
+      "paid_entries": [
+        266.42
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100127-TW"
+      ],
+      "issued_date": "2026-03-06",
+      "paid_date": "2026-04-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100128": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2320.37,
+      "expected_rate": 0.15,
+      "expected_commission": 348.06,
+      "paid_entries": [
+        348.06
+      ],
+      "raw_refs": [
+        "TA-TW-100128"
+      ],
+      "issued_date": "2026-04-18",
+      "paid_date": "2026-06-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "IL-TW-100129": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "ICICI Lombard",
+      "premium": 976.2,
+      "expected_rate": 0.1666,
+      "expected_commission": 162.63,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2026-04-21",
+      "paid_date": "2026-05-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100130": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "Bajaj",
+      "premium": 1796.8,
+      "expected_rate": 0.1422,
+      "expected_commission": 255.5,
+      "paid_entries": [
+        255.43
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100130/MH"
+      ],
+      "issued_date": "2025-11-09",
+      "paid_date": "2025-12-25",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100131": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Digit",
+      "premium": 2336.62,
+      "expected_rate": 0.1537,
+      "expected_commission": 359.14,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2025-12-09",
+      "paid_date": "2026-01-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100132": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1007.85,
+      "expected_rate": 0.1661,
+      "expected_commission": 167.4,
+      "paid_entries": [
+        167.4
+      ],
+      "raw_refs": [
+        "TA-TW-100132"
+      ],
+      "issued_date": "2025-10-15",
+      "paid_date": "2025-11-23",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "IL-TW-100133": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2285.33,
+      "expected_rate": 0.13,
+      "expected_commission": 297.09,
+      "paid_entries": [
+        297.09
+      ],
+      "raw_refs": [
+        "IL-TW-100133"
+      ],
+      "issued_date": "2025-11-07",
+      "paid_date": "2025-12-27",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100134": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2192.37,
+      "expected_rate": 0.1644,
+      "expected_commission": 360.43,
+      "paid_entries": [
+        360.43
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100134/KA"
+      ],
+      "issued_date": "2026-04-24",
+      "paid_date": "2026-05-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100135": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1582.66,
+      "expected_rate": 0.123,
+      "expected_commission": 194.67,
+      "paid_entries": [
+        194.67
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100135-TW"
+      ],
+      "issued_date": "2025-07-06",
+      "paid_date": "2025-08-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100136": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1583.9,
+      "expected_rate": 0.1489,
+      "expected_commission": 235.84,
+      "paid_entries": [
+        235.84
+      ],
+      "raw_refs": [
+        "TA-TW-100136"
+      ],
+      "issued_date": "2026-03-22",
+      "paid_date": "2026-05-06",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100137": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2399.93,
+      "expected_rate": 0.1622,
+      "expected_commission": 389.27,
+      "paid_entries": [
+        389.27
+      ],
+      "raw_refs": [
+        "IL-TW-100137"
+      ],
+      "issued_date": "2025-12-16",
+      "paid_date": "2026-01-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100138": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2844.52,
+      "expected_rate": 0.1886,
+      "expected_commission": 536.48,
+      "paid_entries": [
+        536.48
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100138/TN"
+      ],
+      "issued_date": "2026-01-19",
+      "paid_date": "2026-02-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100139": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1867.51,
+      "expected_rate": 0.1073,
+      "expected_commission": 200.38,
+      "paid_entries": [
+        200.38
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100139-TW"
+      ],
+      "issued_date": "2026-04-24",
+      "paid_date": "2026-05-29",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100140": {
+      "scenario": "DUPLICATE",
+      "insurer": "Tata AIG",
+      "premium": 2618.49,
+      "expected_rate": 0.1339,
+      "expected_commission": 350.62,
+      "paid_entries": [
+        350.62,
+        350.62
+      ],
+      "raw_refs": [
+        "TA-TW-100140",
+        "TA-TW-100140"
+      ],
+      "issued_date": "2026-03-11",
+      "paid_date": "2026-05-01",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "IL-TW-100141": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "ICICI Lombard",
+      "premium": 998.33,
+      "expected_rate": 0.1479,
+      "expected_commission": 147.65,
+      "paid_entries": [
+        147.76
+      ],
+      "raw_refs": [
+        "IL-TW-100141"
+      ],
+      "issued_date": "2025-08-06",
+      "paid_date": "2025-09-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100142": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1156.03,
+      "expected_rate": 0.1499,
+      "expected_commission": 173.29,
+      "paid_entries": [
+        173.29
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100142/DL"
+      ],
+      "issued_date": "2025-06-29",
+      "paid_date": "2025-08-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "DG-TW-100143": {
+      "scenario": "MISSING_COMMISSION",
+      "insurer": "Digit",
+      "premium": 2100.04,
+      "expected_rate": 0.1369,
+      "expected_commission": 287.5,
+      "paid_entries": [],
+      "raw_refs": [],
+      "issued_date": "2025-09-11",
+      "paid_date": "2025-10-01",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100144": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1012.45,
+      "expected_rate": 0.1869,
+      "expected_commission": 189.23,
+      "paid_entries": [
+        189.23
+      ],
+      "raw_refs": [
+        "TA-TW-100144"
+      ],
+      "issued_date": "2026-03-16",
+      "paid_date": "2026-03-29",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Hero Velocity Motors"
+    },
+    "IL-TW-100145": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1339.76,
+      "expected_rate": 0.1684,
+      "expected_commission": 225.62,
+      "paid_entries": [
+        225.62
+      ],
+      "raw_refs": [
+        "IL-TW-100145"
+      ],
+      "issued_date": "2025-10-29",
+      "paid_date": "2025-12-10",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100146": {
+      "scenario": "UNDERPAID",
+      "insurer": "Bajaj",
+      "premium": 1258.05,
+      "expected_rate": 0.1764,
+      "expected_commission": 221.92,
+      "paid_entries": [
+        133.37
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100146/KA"
+      ],
+      "issued_date": "2026-01-02",
+      "paid_date": "2026-02-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100147": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1333.48,
+      "expected_rate": 0.1074,
+      "expected_commission": 143.22,
+      "paid_entries": [
+        143.22
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100147-TW"
+      ],
+      "issued_date": "2026-03-15",
+      "paid_date": "2026-04-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100148": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2717.5,
+      "expected_rate": 0.1733,
+      "expected_commission": 470.94,
+      "paid_entries": [
+        470.94
+      ],
+      "raw_refs": [
+        "TA-TW-100148"
+      ],
+      "issued_date": "2025-10-07",
+      "paid_date": "2025-11-08",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100149": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1860.89,
+      "expected_rate": 0.178,
+      "expected_commission": 331.24,
+      "paid_entries": [
+        331.24
+      ],
+      "raw_refs": [
+        "IL-TW-100149"
+      ],
+      "issued_date": "2025-06-12",
+      "paid_date": "2025-07-19",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "BJ-TW-100150": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1711.86,
+      "expected_rate": 0.1929,
+      "expected_commission": 330.22,
+      "paid_entries": [
+        330.22
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100150/TN"
+      ],
+      "issued_date": "2025-10-25",
+      "paid_date": "2025-11-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100151": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1622.7,
+      "expected_rate": 0.127,
+      "expected_commission": 206.08,
+      "paid_entries": [
+        206.08
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100151-TW"
+      ],
+      "issued_date": "2026-03-13",
+      "paid_date": "2026-03-29",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100152": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2727.9,
+      "expected_rate": 0.1753,
+      "expected_commission": 478.2,
+      "paid_entries": [
+        478.2
+      ],
+      "raw_refs": [
+        "TA-TW-100152"
+      ],
+      "issued_date": "2025-12-11",
+      "paid_date": "2026-01-27",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100153": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1888.67,
+      "expected_rate": 0.1289,
+      "expected_commission": 243.45,
+      "paid_entries": [
+        243.45
+      ],
+      "raw_refs": [
+        "IL-TW-100153"
+      ],
+      "issued_date": "2025-08-12",
+      "paid_date": "2025-09-23",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Honda Prestige Riders"
+    },
+    "BJ-TW-100154": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1449.58,
+      "expected_rate": 0.1889,
+      "expected_commission": 273.83,
+      "paid_entries": [
+        273.83
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100154/KA"
+      ],
+      "issued_date": "2026-02-18",
+      "paid_date": "2026-04-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "DG-TW-100155": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2017.05,
+      "expected_rate": 0.1102,
+      "expected_commission": 222.28,
+      "paid_entries": [
+        222.28
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100155-TW"
+      ],
+      "issued_date": "2025-10-15",
+      "paid_date": "2025-10-30",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100156": {
+      "scenario": "UNDERPAID",
+      "insurer": "Tata AIG",
+      "premium": 1152.86,
+      "expected_rate": 0.1714,
+      "expected_commission": 197.6,
+      "paid_entries": [
+        156.89
+      ],
+      "raw_refs": [
+        "TA-TW-100156"
+      ],
+      "issued_date": "2026-01-14",
+      "paid_date": "2026-02-21",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "IL-TW-100157": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1806.74,
+      "expected_rate": 0.1426,
+      "expected_commission": 257.64,
+      "paid_entries": [
+        257.64
+      ],
+      "raw_refs": [
+        "IL-TW-100157"
+      ],
+      "issued_date": "2025-09-17",
+      "paid_date": "2025-11-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100158": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1966.17,
+      "expected_rate": 0.1535,
+      "expected_commission": 301.81,
+      "paid_entries": [
+        301.81
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100158/TS"
+      ],
+      "issued_date": "2025-09-08",
+      "paid_date": "2025-10-07",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "DG-TW-100159": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1093.75,
+      "expected_rate": 0.1406,
+      "expected_commission": 153.78,
+      "paid_entries": [
+        153.78
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100159-TW"
+      ],
+      "issued_date": "2025-11-28",
+      "paid_date": "2025-12-28",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "TA-TW-100160": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1362.89,
+      "expected_rate": 0.1587,
+      "expected_commission": 216.29,
+      "paid_entries": [
+        216.29
+      ],
+      "raw_refs": [
+        "TA-TW-100160"
+      ],
+      "issued_date": "2025-11-28",
+      "paid_date": "2026-01-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "IL-TW-100161": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 951.53,
+      "expected_rate": 0.1743,
+      "expected_commission": 165.85,
+      "paid_entries": [
+        165.85
+      ],
+      "raw_refs": [
+        "IL-TW-100161"
+      ],
+      "issued_date": "2026-04-13",
+      "paid_date": "2026-05-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "BJ-TW-100162": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2779.04,
+      "expected_rate": 0.1987,
+      "expected_commission": 552.2,
+      "paid_entries": [
+        552.2
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100162/RJ"
+      ],
+      "issued_date": "2025-07-23",
+      "paid_date": "2025-08-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "DG-TW-100163": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2154.6,
+      "expected_rate": 0.1139,
+      "expected_commission": 245.41,
+      "paid_entries": [
+        245.41
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100163-TW"
+      ],
+      "issued_date": "2025-10-25",
+      "paid_date": "2025-11-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "TA-TW-100164": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1446.78,
+      "expected_rate": 0.1662,
+      "expected_commission": 240.45,
+      "paid_entries": [
+        240.45
+      ],
+      "raw_refs": [
+        "TA-TW-100164"
+      ],
+      "issued_date": "2025-10-27",
+      "paid_date": "2025-11-08",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100165": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2467.63,
+      "expected_rate": 0.1398,
+      "expected_commission": 344.97,
+      "paid_entries": [
+        344.97
+      ],
+      "raw_refs": [
+        "IL-TW-100165"
+      ],
+      "issued_date": "2026-01-28",
+      "paid_date": "2026-02-21",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "BJ-TW-100166": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1880.56,
+      "expected_rate": 0.1452,
+      "expected_commission": 273.06,
+      "paid_entries": [
+        273.06
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100166/RJ"
+      ],
+      "issued_date": "2025-09-01",
+      "paid_date": "2025-10-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100167": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2357.51,
+      "expected_rate": 0.1572,
+      "expected_commission": 370.6,
+      "paid_entries": [
+        370.6
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100167-TW"
+      ],
+      "issued_date": "2025-12-15",
+      "paid_date": "2026-01-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "TA-TW-100168": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1463.61,
+      "expected_rate": 0.1543,
+      "expected_commission": 225.84,
+      "paid_entries": [
+        225.84
+      ],
+      "raw_refs": [
+        "TA-TW-100168"
+      ],
+      "issued_date": "2025-07-02",
+      "paid_date": "2025-08-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100169": {
+      "scenario": "UNDERPAID",
+      "insurer": "ICICI Lombard",
+      "premium": 2345.47,
+      "expected_rate": 0.1563,
+      "expected_commission": 366.6,
+      "paid_entries": [
+        287.05
+      ],
+      "raw_refs": [
+        "IL-TW-100169"
+      ],
+      "issued_date": "2026-02-01",
+      "paid_date": "2026-03-14",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100170": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "Bajaj",
+      "premium": 2257.53,
+      "expected_rate": 0.1447,
+      "expected_commission": 326.66,
+      "paid_entries": [
+        326.66
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100170/RJ"
+      ],
+      "issued_date": "2026-02-28",
+      "paid_date": "2026-04-14",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100171": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 2210.59,
+      "expected_rate": 0.143,
+      "expected_commission": 316.11,
+      "paid_entries": [
+        316.11
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100171-TW"
+      ],
+      "issued_date": "2026-02-25",
+      "paid_date": "2026-03-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "TA-TW-100172": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 965.47,
+      "expected_rate": 0.1577,
+      "expected_commission": 152.25,
+      "paid_entries": [
+        152.25
+      ],
+      "raw_refs": [
+        "TA-TW-100172"
+      ],
+      "issued_date": "2026-01-02",
+      "paid_date": "2026-02-19",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100173": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2250.77,
+      "expected_rate": 0.1525,
+      "expected_commission": 343.24,
+      "paid_entries": [
+        343.24
+      ],
+      "raw_refs": [
+        "IL-TW-100173"
+      ],
+      "issued_date": "2025-06-27",
+      "paid_date": "2025-07-31",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100174": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2835.71,
+      "expected_rate": 0.1629,
+      "expected_commission": 461.94,
+      "paid_entries": [
+        461.94
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100174/MH"
+      ],
+      "issued_date": "2026-04-28",
+      "paid_date": "2026-06-02",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100175": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1104.69,
+      "expected_rate": 0.1587,
+      "expected_commission": 175.31,
+      "paid_entries": [
+        175.31
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100175-TW"
+      ],
+      "issued_date": "2026-03-06",
+      "paid_date": "2026-04-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100176": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1160.24,
+      "expected_rate": 0.1413,
+      "expected_commission": 163.94,
+      "paid_entries": [
+        163.94
+      ],
+      "raw_refs": [
+        "TA-TW-100176"
+      ],
+      "issued_date": "2025-10-08",
+      "paid_date": "2025-11-11",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "IL-TW-100177": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 917.15,
+      "expected_rate": 0.1559,
+      "expected_commission": 142.98,
+      "paid_entries": [
+        142.98
+      ],
+      "raw_refs": [
+        "IL-TW-100177"
+      ],
+      "issued_date": "2025-07-05",
+      "paid_date": "2025-08-24",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "BJ-TW-100178": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1857.79,
+      "expected_rate": 0.1574,
+      "expected_commission": 292.42,
+      "paid_entries": [
+        292.42
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100178/DL"
+      ],
+      "issued_date": "2025-09-20",
+      "paid_date": "2025-10-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "DG-TW-100179": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1400.31,
+      "expected_rate": 0.1334,
+      "expected_commission": 186.8,
+      "paid_entries": [
+        186.8
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100179-TW"
+      ],
+      "issued_date": "2025-09-25",
+      "paid_date": "2025-10-26",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100180": {
+      "scenario": "DUPLICATE",
+      "insurer": "Tata AIG",
+      "premium": 1487.47,
+      "expected_rate": 0.155,
+      "expected_commission": 230.56,
+      "paid_entries": [
+        230.56,
+        230.56
+      ],
+      "raw_refs": [
+        "TA-TW-100180",
+        "TA-TW-100180"
+      ],
+      "issued_date": "2026-04-29",
+      "paid_date": "2026-06-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda BigWing"
+    },
+    "IL-TW-100181": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2679.48,
+      "expected_rate": 0.1537,
+      "expected_commission": 411.84,
+      "paid_entries": [
+        411.84
+      ],
+      "raw_refs": [
+        "IL-TW-100181"
+      ],
+      "issued_date": "2025-11-02",
+      "paid_date": "2025-12-13",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Honda BigWing"
+    },
+    "BJ-TW-100182": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2544.27,
+      "expected_rate": 0.1455,
+      "expected_commission": 370.19,
+      "paid_entries": [
+        370.19
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100182/TN"
+      ],
+      "issued_date": "2025-11-17",
+      "paid_date": "2025-12-27",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100183": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1267.78,
+      "expected_rate": 0.1544,
+      "expected_commission": 195.75,
+      "paid_entries": [
+        195.75
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100183-TW"
+      ],
+      "issued_date": "2026-03-29",
+      "paid_date": "2026-05-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Honda Prestige Riders"
+    },
+    "TA-TW-100184": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2680.25,
+      "expected_rate": 0.1631,
+      "expected_commission": 437.15,
+      "paid_entries": [
+        437.15
+      ],
+      "raw_refs": [
+        "TA-TW-100184"
+      ],
+      "issued_date": "2026-04-07",
+      "paid_date": "2026-05-14",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "IL-TW-100185": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1047.22,
+      "expected_rate": 0.1789,
+      "expected_commission": 187.35,
+      "paid_entries": [
+        187.35
+      ],
+      "raw_refs": [
+        "IL-TW-100185"
+      ],
+      "issued_date": "2025-12-05",
+      "paid_date": "2026-01-15",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Apex Motors"
+    },
+    "BJ-TW-100186": {
+      "scenario": "RENEWAL_1PLUS1_NOT_PROVISIONED",
+      "insurer": "Bajaj",
+      "premium": 1956.62,
+      "expected_rate": 0.175,
+      "expected_commission": 342.41,
+      "paid_entries": [
+        342.41
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100186/KA"
+      ],
+      "issued_date": "2025-08-14",
+      "paid_date": "2025-09-11",
+      "renewal_eligible": true,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100187": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "Digit",
+      "premium": 2376.72,
+      "expected_rate": 0.1293,
+      "expected_commission": 307.31,
+      "paid_entries": [
+        307.8
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100187-TW"
+      ],
+      "issued_date": "2026-02-13",
+      "paid_date": "2026-03-13",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100188": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 917.65,
+      "expected_rate": 0.1808,
+      "expected_commission": 165.91,
+      "paid_entries": [
+        165.91
+      ],
+      "raw_refs": [
+        "TA-TW-100188"
+      ],
+      "issued_date": "2026-03-05",
+      "paid_date": "2026-04-19",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "IL-TW-100189": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1762.02,
+      "expected_rate": 0.1236,
+      "expected_commission": 217.79,
+      "paid_entries": [
+        217.79
+      ],
+      "raw_refs": [
+        "IL-TW-100189"
+      ],
+      "issued_date": "2025-06-06",
+      "paid_date": "2025-07-20",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100190": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2804.96,
+      "expected_rate": 0.141,
+      "expected_commission": 395.5,
+      "paid_entries": [
+        395.5
+      ],
+      "raw_refs": [
+        "BAJAJ/2026/BJ-TW-100190/RJ"
+      ],
+      "issued_date": "2026-03-01",
+      "paid_date": "2026-04-16",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100191": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1384.65,
+      "expected_rate": 0.1238,
+      "expected_commission": 171.42,
+      "paid_entries": [
+        171.42
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100191-TW"
+      ],
+      "issued_date": "2026-04-16",
+      "paid_date": "2026-05-20",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100192": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 1608.53,
+      "expected_rate": 0.1632,
+      "expected_commission": 262.51,
+      "paid_entries": [
+        262.51
+      ],
+      "raw_refs": [
+        "TA-TW-100192"
+      ],
+      "issued_date": "2025-06-17",
+      "paid_date": "2025-07-24",
+      "renewal_eligible": true,
+      "renewal_provisioned": true,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "IL-TW-100193": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 2688.3,
+      "expected_rate": 0.1338,
+      "expected_commission": 359.69,
+      "paid_entries": [
+        359.69
+      ],
+      "raw_refs": [
+        "IL-TW-100193"
+      ],
+      "issued_date": "2026-03-17",
+      "paid_date": "2026-05-01",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero MotoCorp Showroom"
+    },
+    "BJ-TW-100194": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 2024.07,
+      "expected_rate": 0.1851,
+      "expected_commission": 374.66,
+      "paid_entries": [
+        374.66
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100194/KA"
+      ],
+      "issued_date": "2025-11-09",
+      "paid_date": "2025-12-04",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Ather Space"
+    },
+    "DG-TW-100195": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "Digit",
+      "premium": 2431.0,
+      "expected_rate": 0.1414,
+      "expected_commission": 343.74,
+      "paid_entries": [
+        343.78
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100195-TW"
+      ],
+      "issued_date": "2025-11-20",
+      "paid_date": "2025-12-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "TA-TW-100196": {
+      "scenario": "CLEAN",
+      "insurer": "Tata AIG",
+      "premium": 2388.01,
+      "expected_rate": 0.1873,
+      "expected_commission": 447.27,
+      "paid_entries": [
+        447.27
+      ],
+      "raw_refs": [
+        "TA-TW-100196"
+      ],
+      "issued_date": "2025-07-11",
+      "paid_date": "2025-08-30",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Hero Velocity Motors"
+    },
+    "IL-TW-100197": {
+      "scenario": "CLEAN",
+      "insurer": "ICICI Lombard",
+      "premium": 1221.48,
+      "expected_rate": 0.1552,
+      "expected_commission": 189.57,
+      "paid_entries": [
+        189.57
+      ],
+      "raw_refs": [
+        "IL-TW-100197"
+      ],
+      "issued_date": "2026-03-14",
+      "paid_date": "2026-04-22",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "BJ-TW-100198": {
+      "scenario": "CLEAN",
+      "insurer": "Bajaj",
+      "premium": 1158.55,
+      "expected_rate": 0.1634,
+      "expected_commission": 189.31,
+      "paid_entries": [
+        189.31
+      ],
+      "raw_refs": [
+        "BAJAJ/2025/BJ-TW-100198/MH"
+      ],
+      "issued_date": "2025-08-21",
+      "paid_date": "2025-10-12",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    },
+    "DG-TW-100199": {
+      "scenario": "CLEAN",
+      "insurer": "Digit",
+      "premium": 1224.78,
+      "expected_rate": 0.1269,
+      "expected_commission": 155.42,
+      "paid_entries": [
+        155.42
+      ],
+      "raw_refs": [
+        "DIGIT-DG-TW-100199-TW"
+      ],
+      "issued_date": "2025-07-24",
+      "paid_date": "2025-08-10",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "TVS Sundaram Wheels"
+    },
+    "TA-TW-100200": {
+      "scenario": "ROUNDING_DELTA",
+      "insurer": "Tata AIG",
+      "premium": 1625.6,
+      "expected_rate": 0.1351,
+      "expected_commission": 219.62,
+      "paid_entries": [
+        220.11
+      ],
+      "raw_refs": [
+        "TA-TW-100200"
+      ],
+      "issued_date": "2025-06-09",
+      "paid_date": "2025-07-17",
+      "renewal_eligible": false,
+      "renewal_provisioned": false,
+      "dealer": "Bajaj Probiking Hub"
+    }
+  }
+}

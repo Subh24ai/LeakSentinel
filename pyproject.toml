@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "leaksentinel"
+version = "0.1.0"
+description = "Agentic commission-reconciliation engine for two-wheeler insurance distribution"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Subhash Gupta", email = "subhashgupta2864@gmail.com" }]
+keywords = ["insurance", "commission", "reconciliation", "agentic", "langgraph"]
+
+dependencies = [
+    # API layer
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    # Data / persistence
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.14",
+    # Validation / settings
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "python-dotenv>=1.0",
+    # Agentic orchestration
+    "langgraph>=0.2.50",
+    "langchain-core>=0.3",
+    # LLM providers (Anthropic primary, Groq alternative)
+    "langchain-anthropic>=0.3",
+    "langchain-groq>=0.2",
+    # Analytics / ML
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "numpy>=1.26",
+    # Document handling
+    "openpyxl>=3.1",
+    "python-multipart>=0.0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "httpx>=0.27",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[project.scripts]
+leaksentinel = "leaksentinel.api.main:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+leaksentinel = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true

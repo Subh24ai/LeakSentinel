@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: leaksentinel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: leaksentinel
+      POSTGRES_PASSWORD: leaksentinel
+      POSTGRES_DB: leaksentinel
+    ports:
+      # Host 5433 -> container 5432 (5432 is often taken by another local Postgres)
+      - "5433:5432"
+    volumes:
+      - leaksentinel_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U leaksentinel -d leaksentinel"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  leaksentinel_pgdata:

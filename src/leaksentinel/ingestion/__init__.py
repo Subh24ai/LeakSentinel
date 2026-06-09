@@ -1,0 +1,1 @@
+"""LeakSentinel ingestion module (skeleton)."""

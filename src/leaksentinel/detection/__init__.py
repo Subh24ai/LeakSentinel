@@ -1,0 +1,1 @@
+"""LeakSentinel detection module (skeleton)."""

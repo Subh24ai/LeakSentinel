@@ -1,0 +1,1 @@
+"""LeakSentinel documents module (skeleton)."""
