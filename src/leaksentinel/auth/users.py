@@ -37,6 +37,14 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="true", default=True
     )
+    # True until the user sets their own password (every new/bootstrapped account
+    # starts with a temporary password they must change on first login).
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="true", default=True
+    )
+    # Email of the admin who created this account (None for the bootstrap admin).
+    created_by: Mapped[str | None] = mapped_column(String(255))
+    last_login_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -71,8 +79,20 @@ def get_user_by_email(session: Session, email: str) -> User | None:
     ).scalar_one_or_none()
 
 
-def create_user(session: Session, email: str, password: str, role: str) -> User:
-    """Create and flush a new user. Raises ``ValueError`` on an unknown role."""
+def create_user(
+    session: Session,
+    email: str,
+    password: str,
+    role: str,
+    *,
+    created_by: str | None = None,
+    must_change_password: bool = True,
+) -> User:
+    """Create and flush a new user. Raises ``ValueError`` on an unknown role.
+
+    New accounts start with ``must_change_password=True`` so the temporary
+    password set by an admin (or the bootstrap) must be changed on first login.
+    """
     if role not in VALID_ROLES:
         raise ValueError(f"unknown role {role!r}; must be one of {VALID_ROLES}")
     user = User(
@@ -80,7 +100,59 @@ def create_user(session: Session, email: str, password: str, role: str) -> User:
         hashed_password=hash_password(password),
         role=role,
         is_active=True,
+        must_change_password=must_change_password,
+        created_by=created_by,
     )
     session.add(user)
     session.flush()
     return user
+
+
+def list_users(session: Session) -> list[User]:
+    """All users, oldest first (for the admin user-management table)."""
+    return list(session.execute(select(User).order_by(User.id)).scalars().all())
+
+
+def update_user_fields(
+    session: Session,
+    user_id: int,
+    *,
+    role: str | None = None,
+    is_active: bool | None = None,
+) -> User | None:
+    """Patch a user's role and/or active flag. Returns the user, or ``None`` if
+    it doesn't exist. Raises ``ValueError`` on an unknown role."""
+    user = session.get(User, user_id)
+    if user is None:
+        return None
+    if role is not None:
+        if role not in VALID_ROLES:
+            raise ValueError(f"unknown role {role!r}; must be one of {VALID_ROLES}")
+        user.role = role
+    if is_active is not None:
+        user.is_active = is_active
+    session.flush()
+    return user
+
+
+def soft_delete_user(session: Session, user_id: int) -> User | None:
+    """Deactivate a user (preserves the row, and any audit/created_by trail)."""
+    user = session.get(User, user_id)
+    if user is None:
+        return None
+    user.is_active = False
+    session.flush()
+    return user
+
+
+def set_password(session: Session, user: User, new_password: str) -> None:
+    """Replace a user's password hash and clear the must-change flag."""
+    user.hashed_password = hash_password(new_password)
+    user.must_change_password = False
+    session.flush()
+
+
+def touch_last_login(session: Session, user: User) -> None:
+    """Stamp the user's last successful login time."""
+    user.last_login_at = dt.datetime.now(dt.UTC)
+    session.flush()

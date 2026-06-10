@@ -17,6 +17,7 @@ from leaksentinel.auth.core import (
     decode_token,
     get_current_user,
     require_jwt_secret,
+    require_password_changed,
     require_role,
 )
 from leaksentinel.auth.users import (
@@ -25,6 +26,11 @@ from leaksentinel.auth.users import (
     create_user,
     get_user_by_email,
     hash_password,
+    list_users,
+    set_password,
+    soft_delete_user,
+    touch_last_login,
+    update_user_fields,
     verify_password,
 )
 from leaksentinel.config import Settings, get_settings
@@ -43,8 +49,14 @@ __all__ = [
     "get_current_user",
     "get_user_by_email",
     "hash_password",
+    "list_users",
     "require_jwt_secret",
+    "require_password_changed",
     "require_role",
+    "set_password",
+    "soft_delete_user",
+    "touch_last_login",
+    "update_user_fields",
     "verify_password",
 ]
 

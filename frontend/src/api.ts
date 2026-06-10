@@ -146,15 +146,30 @@ export function setUnauthorizedHandler(fn: (() => void) | null): void {
 }
 
 // --- auth response types --------------------------------------------------- //
+export type Role = "admin" | "ops" | "viewer";
+
 export interface Token {
   access_token: string;
   token_type: string;
+  must_change_password: boolean;
 }
 
 export interface AuthUser {
   id: number;
   email: string;
   role: string;
+  must_change_password: boolean;
+}
+
+export interface UserAdmin {
+  id: number;
+  email: string;
+  role: Role;
+  is_active: boolean;
+  must_change_password: boolean;
+  created_by: string | null;
+  last_login_at: string | null;
+  created_at: string;
 }
 
 // --- fetch wrapper --------------------------------------------------------- //
@@ -236,6 +251,36 @@ export const api = {
   },
 
   getMe: () => request<AuthUser>("/auth/me"),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ status: string }>("/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    }),
+
+  // --- user management (admin) --- //
+  getUsers: () => request<UserAdmin[]>("/auth/users"),
+
+  registerUser: (email: string, password: string, role: Role) =>
+    request<UserAdmin>("/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, role }),
+    }),
+
+  patchUser: (id: number, patch: { role?: Role; is_active?: boolean }) =>
+    request<UserAdmin>(`/auth/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    }),
+
+  deactivateUser: (id: number) =>
+    request<UserAdmin>(`/auth/users/${id}`, { method: "DELETE" }),
 
   getMetrics: () => request<Metrics>("/metrics"),
 

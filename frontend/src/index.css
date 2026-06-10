@@ -910,3 +910,82 @@ tbody tr.clickable:hover {
   width: 15px;
   height: 15px;
 }
+
+/* ── Change-password banner / field hints ───────────────────────────────── */
+.login-banner {
+  background: var(--warn-wash);
+  color: var(--warn);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  font-size: 13px;
+}
+.field-hint-err {
+  color: var(--danger);
+  font-size: 12px;
+}
+
+/* ── Sidebar: change-password link + role row ───────────────────────────── */
+.user-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.change-pw-link {
+  font-size: 11px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.change-pw-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Users page ─────────────────────────────────────────────────────────── */
+.self-tag {
+  margin-left: 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.btn-sm {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+table select {
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+table select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.add-user {
+  margin-bottom: 18px;
+}
+.add-user-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+}
+.add-user-fields .field {
+  flex: 1 1 180px;
+}
+.add-user-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--ink-3);
+}

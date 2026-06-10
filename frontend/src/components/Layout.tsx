@@ -1,10 +1,11 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
-import { IconAudit, IconDashboard, IconLeaks, IconLogout } from "./icons";
+import { IconAudit, IconDashboard, IconLeaks, IconLogout, IconUsers } from "./icons";
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="app">
@@ -31,12 +32,23 @@ export function Layout() {
             <IconAudit />
             Audit &amp; Escalations
           </NavLink>
+          {isAdmin && (
+            <NavLink to="/users">
+              <IconUsers />
+              Users
+            </NavLink>
+          )}
         </nav>
 
         <div className="user-box">
           <div className="user-meta">
             <div className="user-email">{user?.email ?? "Signed in"}</div>
-            {user?.role && <div className="user-role">{user.role}</div>}
+            <div className="user-foot">
+              {user?.role && <span className="user-role">{user.role}</span>}
+              <Link className="change-pw-link" to="/change-password">
+                Change password
+              </Link>
+            </div>
           </div>
           <button className="btn-logout" onClick={logout} title="Sign out">
             <IconLogout />

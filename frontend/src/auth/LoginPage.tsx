@@ -1,22 +1,17 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
 
 import { ApiError } from "../api";
 import { useAuth } from "./AuthContext";
 
 export function LoginPage() {
-  const { login, token } = useAuth();
-  const navigate = useNavigate();
+  // login() handles navigation (to /change-password or / depending on whether
+  // the user still has a temporary password), so this page only collects creds.
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  // Already authenticated? Don't show the form — go home.
-  useEffect(() => {
-    if (token) navigate("/", { replace: true });
-  }, [token, navigate]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +19,6 @@ export function LoginPage() {
     setError(null);
     try {
       await login(email, password);
-      navigate("/", { replace: true });
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401

@@ -8,6 +8,7 @@ data isn't present, like the other DB-backed tests.
 
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 
 import pytest
@@ -16,7 +17,7 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import OperationalError
 
 from leaksentinel.api.main import app
-from leaksentinel.auth import create_user, get_user_by_email
+from leaksentinel.auth import create_user, get_user_by_email, hash_password
 from leaksentinel.db import SessionLocal, create_all
 from leaksentinel.db import engine as db_engine
 from leaksentinel.reconciliation.models import Policy
@@ -40,13 +41,20 @@ def _db_ready() -> bool:
 
 
 def _ensure_admin() -> None:
-    """Make sure an admin user exists so the token endpoint can authenticate."""
+    """Make sure a usable admin exists. Force a known password and clear the
+    must-change flag so the data tests aren't password-gated, regardless of any
+    prior run that may have changed/locked the account."""
     create_all()  # ensure users + action tables exist
     session = SessionLocal()
     try:
-        if get_user_by_email(session, ADMIN_EMAIL) is None:
-            create_user(session, ADMIN_EMAIL, ADMIN_PW, "admin")
-            session.commit()
+        user = get_user_by_email(session, ADMIN_EMAIL)
+        if user is None:
+            create_user(session, ADMIN_EMAIL, ADMIN_PW, "admin", must_change_password=False)
+        else:
+            user.hashed_password = hash_password(ADMIN_PW)
+            user.must_change_password = False
+            user.is_active = True
+        session.commit()
     finally:
         session.close()
 
@@ -192,3 +200,137 @@ async def test_metrics_shape_and_values(client, reconciled):
     # The two exposures agree between the metrics view and the run summary.
     assert m["underpayment_exposure"] == reconciled["underpayment_exposure"]
     assert m["clawback_exposure"] == reconciled["clawback_exposure"]
+
+
+# --------------------------------------------------------------------------- #
+# User management + password-change gate
+# --------------------------------------------------------------------------- #
+def _email(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:8]}@leaksentinel.test"
+
+
+@pytest.mark.asyncio
+async def test_register_creates_must_change_user_and_409_on_dup(client):
+    email = _email("ops")
+    resp = await client.post(
+        "/auth/register", json={"email": email, "password": "TempPass1", "role": "ops"}
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["email"] == email
+    assert body["role"] == "ops"
+    assert body["must_change_password"] is True
+    assert body["created_by"] == ADMIN_EMAIL
+    assert "hashed_password" not in body and "password" not in body
+    # Duplicate email -> 409.
+    dup = await client.post(
+        "/auth/register", json={"email": email, "password": "TempPass1", "role": "ops"}
+    )
+    assert dup.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_temp_password_user_is_gated_until_change(client):
+    email = _email("gate")
+    assert (
+        await client.post(
+            "/auth/register",
+            json={"email": email, "password": "TempPass1", "role": "viewer"},
+        )
+    ).status_code == 201
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        tok = (
+            await c.post("/auth/token", data={"username": email, "password": "TempPass1"})
+        ).json()
+        assert tok["must_change_password"] is True
+        c.headers.update({"Authorization": f"Bearer {tok['access_token']}"})
+
+        # Gated everywhere except login/change-password.
+        gated = await c.get("/metrics")
+        assert gated.status_code == 403
+        assert gated.json()["detail"] == "password_change_required"
+
+        # Wrong current password / too-short new password -> 400.
+        assert (
+            await c.post(
+                "/auth/change-password",
+                json={"current_password": "wrong", "new_password": "NewPass12"},
+            )
+        ).status_code == 400
+        assert (
+            await c.post(
+                "/auth/change-password",
+                json={"current_password": "TempPass1", "new_password": "short"},
+            )
+        ).status_code == 400
+
+        # Success -> the SAME token now passes the gate (it reads the live DB).
+        ok = await c.post(
+            "/auth/change-password",
+            json={"current_password": "TempPass1", "new_password": "NewPass12"},
+        )
+        assert ok.status_code == 200
+        assert (await c.get("/metrics")).status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_viewer_cannot_manage_users(client):
+    email = _email("vw")
+    await client.post(
+        "/auth/register", json={"email": email, "password": "TempPass1", "role": "viewer"}
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        tok = (
+            await c.post("/auth/token", data={"username": email, "password": "TempPass1"})
+        ).json()["access_token"]
+        c.headers.update({"Authorization": f"Bearer {tok}"})
+        await c.post(
+            "/auth/change-password",
+            json={"current_password": "TempPass1", "new_password": "ViewerPass1"},
+        )
+        assert (await c.get("/auth/users")).status_code == 403
+        assert (
+            await c.post(
+                "/auth/register",
+                json={"email": _email("x"), "password": "TempPass1", "role": "ops"},
+            )
+        ).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_self_protection(client):
+    users = (await client.get("/auth/users")).json()
+    admin = next(u for u in users if u["email"] == ADMIN_EMAIL)
+    assert (
+        await client.patch(f"/auth/users/{admin['id']}", json={"role": "ops"})
+    ).status_code == 400
+    assert (
+        await client.patch(f"/auth/users/{admin['id']}", json={"is_active": False})
+    ).status_code == 400
+    assert (await client.delete(f"/auth/users/{admin['id']}")).status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_admin_patch_and_soft_delete_other(client):
+    email = _email("pat")
+    uid = (
+        await client.post(
+            "/auth/register",
+            json={"email": email, "password": "TempPass1", "role": "viewer"},
+        )
+    ).json()["id"]
+
+    promote = await client.patch(f"/auth/users/{uid}", json={"role": "ops"})
+    assert promote.status_code == 200 and promote.json()["role"] == "ops"
+
+    deleted = await client.delete(f"/auth/users/{uid}")
+    assert deleted.status_code == 200 and deleted.json()["is_active"] is False
+
+    # A soft-deleted (inactive) user can no longer authenticate.
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        login = await c.post("/auth/token", data={"username": email, "password": "TempPass1"})
+        assert login.status_code == 401

@@ -55,15 +55,20 @@ def require_jwt_secret(settings: Settings | None = None) -> str:
 # Token issuance / decoding
 # --------------------------------------------------------------------------- #
 def create_access_token(
-    user_id: int | str, role: str, settings: Settings | None = None
+    user_id: int | str,
+    role: str,
+    must_change_password: bool = False,
+    settings: Settings | None = None,
 ) -> str:
-    """Mint a signed JWT carrying the subject (user id) and role, with expiry."""
+    """Mint a signed JWT carrying the subject (user id), role, and the
+    must-change-password flag, with expiry."""
     settings = settings or get_settings()
     secret = require_jwt_secret(settings)
     now = dt.datetime.now(dt.UTC)
     payload = {
         "sub": str(user_id),
         "role": role,
+        "must_change_password": must_change_password,
         "iat": int(now.timestamp()),
         "exp": now + dt.timedelta(hours=settings.jwt_expiry_hours),
     }
@@ -115,20 +120,45 @@ def get_current_user(
     user = session.get(User, user_id)
     if user is None or not user.is_active:
         raise _CREDENTIALS_EXC
-    return {"id": user.id, "email": user.email, "role": user.role}
+    # ``must_change_password`` is sourced from the live DB row (authoritative), so
+    # the gate reflects reality the moment the password is changed — the existing
+    # token keeps working without a re-issue.
+    return {
+        "id": user.id,
+        "email": user.email,
+        "role": user.role,
+        "must_change_password": user.must_change_password,
+    }
 
 
 # --------------------------------------------------------------------------- #
 # Authorization
 # --------------------------------------------------------------------------- #
+def require_password_changed(user: dict = Depends(get_current_user)) -> dict:
+    """Block a user who still has a temporary password from using the app.
+
+    Raises 403 ``password_change_required`` until they set their own password.
+    Applied to every endpoint except the login, change-password, and liveness
+    routes (so the user can still authenticate and fix their password).
+    """
+    if user.get("must_change_password"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="password_change_required",
+        )
+    return user
+
+
 def require_role(*roles: str):
     """Dependency factory: allow only users whose role is in ``roles``.
 
-    401 if unauthenticated; 403 if authenticated but not permitted.
+    Chains through :func:`require_password_changed`, so every role-protected
+    endpoint also enforces the password-change gate. 401 if unauthenticated; 403
+    if authenticated but not permitted (or still on a temporary password).
     """
     allowed = frozenset(roles)
 
-    def _dependency(user: dict = Depends(get_current_user)) -> dict:
+    def _dependency(user: dict = Depends(require_password_changed)) -> dict:
         if user["role"] not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

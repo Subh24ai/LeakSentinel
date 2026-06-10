@@ -30,11 +30,19 @@ Disposition = Literal["remediated", "escalated", "below_threshold", "information
 # --------------------------------------------------------------------------- #
 # Auth
 # --------------------------------------------------------------------------- #
+Role = Literal["admin", "ops", "viewer"]
+
+
 class Token(BaseModel):
-    """An issued JWT bearer token (OAuth2 password-flow response)."""
+    """An issued JWT bearer token (OAuth2 password-flow response).
+
+    ``must_change_password`` tells the client to route the user to the
+    change-password screen before letting them into the app.
+    """
 
     access_token: str
     token_type: str = "bearer"
+    must_change_password: bool = False
 
 
 class UserOut(BaseModel):
@@ -45,6 +53,44 @@ class UserOut(BaseModel):
     id: int
     email: str
     role: str
+    must_change_password: bool = False
+
+
+class UserAdminOut(BaseModel):
+    """Full user record for the admin user-management views. Never the hash."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    role: str
+    is_active: bool
+    must_change_password: bool
+    created_by: str | None = None
+    last_login_at: dt.datetime | None = None
+    created_at: dt.datetime
+
+
+class RegisterRequest(BaseModel):
+    """Admin-created account: a temporary password the user must change."""
+
+    email: str = Field(min_length=3)
+    password: str = Field(min_length=8)
+    role: Role
+
+
+class ChangePasswordRequest(BaseModel):
+    # new_password length is validated in the handler (returns 400, per spec),
+    # not here (which would surface as a 422).
+    current_password: str
+    new_password: str
+
+
+class UserPatchRequest(BaseModel):
+    """Any subset of the admin-mutable fields."""
+
+    role: Role | None = None
+    is_active: bool | None = None
 
 
 # --------------------------------------------------------------------------- #

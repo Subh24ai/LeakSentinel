@@ -61,6 +61,19 @@ def main() -> None:
     for name in tables:
         print(f"  - {name}")
 
+    # Bootstrap the first admin (idempotent). New accounts — including this one —
+    # are created with must_change_password=True (see auth.create_user), so the
+    # default credentials must be changed on first login.
+    from leaksentinel.auth import bootstrap_admin
+
+    settings = get_settings()
+    admin = bootstrap_admin(settings)
+    if admin is not None:
+        print()
+        print("⚠️  Default admin account created. Login and change your password immediately.")
+        print(f"    Email: {settings.first_admin_email}")
+        print(f"    Temporary password: {settings.first_admin_password}")
+
 
 if __name__ == "__main__":
     main()
