@@ -10,36 +10,23 @@ from __future__ import annotations
 
 import datetime as dt
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class ReconStatus(str, Enum):
-    """Outcome of reconciling a policy's expected vs. actual commission."""
-
-    MATCHED = "matched"          # expected ~= actual, within tolerance
-    SHORT_PAID = "short_paid"    # actual < expected (leakage)
-    OVER_PAID = "over_paid"      # actual > expected
-    MISSING = "missing"          # expected exists, no payment found
-    UNEXPECTED = "unexpected"    # payment found, no matching policy
-    UNMATCHED = "unmatched"      # could not be linked at all
-
-
-class ReasonCode(str, Enum):
-    """Why a result landed where it did (drives downstream actions)."""
-
-    OK = "OK"
-    RATE_MISMATCH = "RATE_MISMATCH"
-    AMOUNT_MISMATCH = "AMOUNT_MISMATCH"
-    NO_PAYMENT = "NO_PAYMENT"
-    NO_POLICY = "NO_POLICY"
-    DUPLICATE_PAYMENT = "DUPLICATE_PAYMENT"
-    AMBIGUOUS_REF = "AMBIGUOUS_REF"
-    DATA_QUALITY = "DATA_QUALITY"
+# Rounding tolerance shared by the reconciliation engine and the rounding-delta
+# detector: a |delta| at or below this reads as a clean match. It lives in this
+# dependency-free module so the engine and the detection layer can both import it
+# without forming an import cycle.
+#
+# The system's single canonical reason-code vocabulary is
+# :class:`leaksentinel.detection.rules.DetectionReason`. The engine maps its
+# per-policy verdicts onto those same codes at persist time (the old parallel
+# ``ReconStatus`` / ``ReasonCode`` enums were removed).
+TOLERANCE = Decimal("1.00")
 
 
-class ResolutionState(str, Enum):
+class ResolutionState(StrEnum):
     """Lifecycle of a flagged discrepancy."""
 
     OPEN = "open"
@@ -49,7 +36,7 @@ class ResolutionState(str, Enum):
     WRITTEN_OFF = "written_off"
 
 
-class PaymentStatus(str, Enum):
+class PaymentStatus(StrEnum):
     """Canonical payment status, mapped from each insurer's free-text status."""
 
     PAID = "paid"

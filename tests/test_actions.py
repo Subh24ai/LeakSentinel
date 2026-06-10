@@ -38,6 +38,7 @@ from leaksentinel.actions.remediation import (
     create_commission_claim,
     idempotency_key,
     validate_action,
+    verify_audit_chain,
 )
 from leaksentinel.db import Base
 from leaksentinel.detection.rules import DetectionReason
@@ -156,12 +157,32 @@ def test_idempotent_retry_creates_exactly_one_row(session):
     assert len(api.calls) == 1
 
 
-def test_idempotency_key_is_sha256_of_policy_reason_amount(session):
+def test_idempotency_key_is_sha256_of_policy_and_reason_only(session):
     key = idempotency_key(_finding("100.00"))
     assert len(key) == 64
     assert all(c in "0123456789abcdef" for c in key)
-    # 100 and 100.00 are the same logical amount -> same key.
-    assert key == idempotency_key(_finding("100"))
+    # The key is the logical claim identity (policy_no, reason_code) and is
+    # INDEPENDENT of amount — a corrected amount must not mint a second claim.
+    assert key == idempotency_key(_finding("999999.99"))
+    # A different reason code is a different logical claim -> different key.
+    from leaksentinel.detection.rules import DetectionReason
+    other = _finding("100.00", reason=DetectionReason.UNDERPAID_BELOW_RATE.value)
+    assert key != idempotency_key(other)
+
+
+def test_amount_change_updates_existing_claim_not_a_second_row(session):
+    """M1: a re-detection with a corrected amount UPDATES the active claim in
+    place (one row), does not create a second, and does not re-call the insurer."""
+    api = ExternalClaimsAPI()
+    first = create_commission_claim(_finding("500.00"), session=session, api=api)
+    second = create_commission_claim(_finding("612.40"), session=session, api=api)
+
+    claims = _claims(session)
+    assert len(claims) == 1                       # still one row
+    assert first.status is OutcomeStatus.CREATED
+    assert second.status is OutcomeStatus.EXISTING
+    assert claims[0].claim_amount == Decimal("612.40")  # updated in place
+    assert len(api.calls) == 1                     # insurer only called once
 
 
 # --------------------------------------------------------------------------- #
@@ -189,6 +210,37 @@ def test_blocked_attempt_is_audited_with_hash(session):
     assert "BLOCKED" in row.detail
     # The block was audited even though NO claim was written.
     assert _claims(session) == []
+
+
+def test_audit_log_is_hash_chained(session):
+    """Each audit row links to the previous via prev_hash; sequence is gap-free."""
+    api = ExternalClaimsAPI()
+    create_commission_claim(_finding("500.00"), session=session, api=api)  # seq 1
+    create_commission_claim(_finding("10.00"), session=session, api=api)   # seq 2 (blocked)
+
+    audits = sorted(_audits(session), key=lambda a: a.sequence_no)
+    assert [a.sequence_no for a in audits] == [1, 2]
+    assert audits[0].prev_hash is None
+    assert audits[1].prev_hash == audits[0].payload_sha256
+    ok, reason = verify_audit_chain(session)
+    assert ok, reason
+
+
+def test_audit_chain_detects_tampering(session):
+    """Mutating a row's hash breaks the link to the next row — detectable."""
+    api = ExternalClaimsAPI()
+    create_commission_claim(_finding("500.00"), session=session, api=api)
+    create_commission_claim(
+        _finding("700.00", policy_no="POL-XYZ"), session=session, api=api
+    )
+    assert verify_audit_chain(session)[0]
+
+    audits = sorted(_audits(session), key=lambda a: a.sequence_no)
+    audits[0].payload_sha256 = "deadbeef" * 8  # tamper with row 1
+    session.flush()
+    ok, reason = verify_audit_chain(session)
+    assert not ok
+    assert "broken hash chain" in reason
 
 
 # --------------------------------------------------------------------------- #

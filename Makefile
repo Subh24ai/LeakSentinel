@@ -42,13 +42,17 @@ db-reset: ## Stop Postgres and delete the data volume
 db-logs: ## Tail Postgres logs
 	docker compose logs -f postgres
 
+.PHONY: migrate
+migrate: ## Apply Alembic migrations (the production way to build the schema)
+	$(VENV)/bin/alembic upgrade head
+
 .PHONY: db-init
-db-init: ## Create the schema (tables) in the running Postgres
-	$(PY) scripts/init_db.py
+db-init: ## [DEV] Create the schema directly via create_all (bypasses Alembic)
+	$(PY) scripts/init_db.py --dev
 
 .PHONY: db-recreate
-db-recreate: ## Drop and recreate all tables (destructive)
-	$(PY) scripts/init_db.py --reset
+db-recreate: ## [DEV] Drop and recreate all tables directly (destructive)
+	$(PY) scripts/init_db.py --dev --reset
 
 .PHONY: gen-data
 gen-data: ## Generate synthetic data + load master tables into Postgres
@@ -69,6 +73,10 @@ gen-docs: ## Generate synthetic insurance PDF documents (one with a planted mism
 .PHONY: extract-doc
 extract-doc: ## Real LLM extraction of a generated doc + validation (needs an API key)
 	$(PY) scripts/run_extraction.py
+
+.PHONY: pipeline
+pipeline: ## Run the whole LangGraph pipeline end-to-end and print the summary
+	$(PY) -m leaksentinel.graph.run
 
 .PHONY: run
 run: ## Start the FastAPI dev server

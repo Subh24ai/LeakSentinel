@@ -22,23 +22,24 @@ from __future__ import annotations
 
 from collections import defaultdict
 from decimal import ROUND_HALF_UP, Decimal
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import func, select, text
 
 from leaksentinel.db import SessionLocal
+from leaksentinel.detection.rules import DetectionReason
 from leaksentinel.reconciliation.models import (
     CrmRecord,
     InsurerCommissionFeed,
     Policy,
     ReconciliationResult,
 )
-from leaksentinel.reconciliation.schemas import ReasonCode, ResolutionState
+from leaksentinel.reconciliation.schemas import TOLERANCE, ResolutionState
 
-# Rounding tolerance: deltas at or below this are treated as a clean match.
-# Comfortably above planted rounding deltas (<= ₹0.50) and rate-reconstruction
-# error (<= ₹0.01), and far below any real underpayment.
-TOLERANCE = Decimal("1.00")
+# TOLERANCE (rounding tolerance: |delta| at or below this is a clean match) lives
+# in reconciliation.schemas so the detection layer can share it without an import
+# cycle. Comfortably above planted rounding deltas (<= ₹0.50) and rate-
+# reconstruction error (<= ₹0.01), and far below any real underpayment.
 _TWOPLACES = Decimal("0.01")
 
 
@@ -46,7 +47,7 @@ def _money(value: Decimal) -> Decimal:
     return value.quantize(_TWOPLACES, rounding=ROUND_HALF_UP)
 
 
-class ReconciliationClass(str, Enum):
+class ReconciliationClass(StrEnum):
     """The engine's per-policy verdict (stored in reconciliation_results.status)."""
 
     MATCHED = "MATCHED"
@@ -54,6 +55,21 @@ class ReconciliationClass(str, Enum):
     UNDERPAID = "UNDERPAID"
     OVERPAID_DUPLICATE = "OVERPAID_DUPLICATE"
     CRM_MISMATCH = "CRM_MISMATCH"
+    UNEXPECTED_PAYMENT = "UNEXPECTED_PAYMENT"  # paid on a policy not in our register
+
+
+# The engine's status maps onto the single canonical reason vocabulary
+# (DetectionReason), so a reconciliation row and the finding for the same policy
+# always carry the SAME reason_code string (M2). This is the one place the
+# mapping is defined.
+STATUS_TO_REASON: dict[str, str] = {
+    ReconciliationClass.MATCHED.value: DetectionReason.OK.value,
+    ReconciliationClass.MISSING_COMMISSION.value: DetectionReason.MISSING_COMMISSION.value,
+    ReconciliationClass.UNDERPAID.value: DetectionReason.UNDERPAID_BELOW_RATE.value,
+    ReconciliationClass.OVERPAID_DUPLICATE.value: DetectionReason.DUPLICATE_PAYMENT.value,
+    ReconciliationClass.CRM_MISMATCH.value: DetectionReason.CRM_MISMATCH.value,
+    ReconciliationClass.UNEXPECTED_PAYMENT.value: DetectionReason.NO_MATCHING_POLICY.value,
+}
 
 
 # How an oracle/ground-truth scenario is expected to surface in THIS engine.
@@ -110,41 +126,35 @@ def _classify(
     feed_count: int,
     feed_sum: Decimal,
     crm_recorded: Decimal | None,
-) -> tuple[ReconciliationClass, ReasonCode, Decimal, Decimal]:
-    """Return (class, reason_code, actual, delta) for one policy."""
+) -> tuple[ReconciliationClass, Decimal, Decimal]:
+    """Return (class, actual, delta) for one policy.
+
+    The canonical ``reason_code`` is derived from the class via
+    :data:`STATUS_TO_REASON` at persist time, so it is not returned here.
+    """
     if feed_count == 0:
         actual = Decimal("0.00")
-        return (
-            ReconciliationClass.MISSING_COMMISSION,
-            ReasonCode.NO_PAYMENT,
-            actual,
-            _money(actual - expected),
-        )
+        return ReconciliationClass.MISSING_COMMISSION, actual, _money(actual - expected)
 
     if feed_count >= 2:
         actual = _money(feed_sum)
-        return (
-            ReconciliationClass.OVERPAID_DUPLICATE,
-            ReasonCode.DUPLICATE_PAYMENT,
-            actual,
-            _money(actual - expected),
-        )
+        return ReconciliationClass.OVERPAID_DUPLICATE, actual, _money(actual - expected)
 
     # Exactly one payment.
     actual = _money(feed_sum)
     delta = _money(actual - expected)
 
     if delta < -TOLERANCE:
-        return ReconciliationClass.UNDERPAID, ReasonCode.AMOUNT_MISMATCH, actual, delta
+        return ReconciliationClass.UNDERPAID, actual, delta
     if delta > TOLERANCE:
         # A lone over-payment (not a duplicate); rare. Flag as overpayment.
-        return ReconciliationClass.OVERPAID_DUPLICATE, ReasonCode.AMOUNT_MISMATCH, actual, delta
+        return ReconciliationClass.OVERPAID_DUPLICATE, actual, delta
 
     # Insurer side matches expected. Cross-check our own CRM books.
     if crm_recorded is not None and abs(_money(crm_recorded) - expected) > TOLERANCE:
-        return ReconciliationClass.CRM_MISMATCH, ReasonCode.DATA_QUALITY, actual, delta
+        return ReconciliationClass.CRM_MISMATCH, actual, delta
 
-    return ReconciliationClass.MATCHED, ReasonCode.OK, actual, delta
+    return ReconciliationClass.MATCHED, actual, delta
 
 
 def reconcile(session) -> dict[str, set[str]]:
@@ -186,12 +196,14 @@ def reconcile(session) -> dict[str, set[str]]:
     session.query(ReconciliationResult).delete()
 
     detected: dict[str, set[str]] = defaultdict(set)
+    known: set[str] = set()
     for policy_no, premium, rate in policies:
+        known.add(policy_no)
         expected = _money((premium or Decimal(0)) * (rate or Decimal(0)))
         cnt = feed_count.get(policy_no, 0)
         total = feed_sum.get(policy_no, Decimal("0.00"))
 
-        cls, reason, actual, delta = _classify(expected, cnt, total, crm.get(policy_no))
+        cls, actual, delta = _classify(expected, cnt, total, crm.get(policy_no))
 
         resolution = (
             None
@@ -202,7 +214,7 @@ def reconcile(session) -> dict[str, set[str]]:
             ReconciliationResult(
                 policy_no=policy_no,
                 status=cls.value,
-                reason_code=reason.value,
+                reason_code=STATUS_TO_REASON[cls.value],
                 expected=expected,
                 actual=actual,
                 delta=delta,
@@ -210,6 +222,24 @@ def reconcile(session) -> dict[str, set[str]]:
             )
         )
         detected[cls.value].add(policy_no)
+
+    # Second pass: orphan payments — feed rows whose normalized policy_no is not
+    # in our register. We do not know what we were paid for, so these are flagged
+    # UNEXPECTED_PAYMENT and routed to a human (H1). Not in any oracle scenario.
+    for policy_no in sorted(set(feed_count) - known):
+        actual = _money(feed_sum.get(policy_no, Decimal("0.00")))
+        session.add(
+            ReconciliationResult(
+                policy_no=policy_no,
+                status=ReconciliationClass.UNEXPECTED_PAYMENT.value,
+                reason_code=STATUS_TO_REASON[ReconciliationClass.UNEXPECTED_PAYMENT.value],
+                expected=_money(Decimal("0.00")),
+                actual=actual,
+                delta=actual,  # actual - 0
+                resolution_state=ResolutionState.OPEN.value,
+            )
+        )
+        detected[ReconciliationClass.UNEXPECTED_PAYMENT.value].add(policy_no)
 
     session.flush()
     return detected

@@ -304,7 +304,9 @@ class DigitNormalizer(Normalizer):
             return None, "missing_date"
         try:
             epoch = int(float(raw_date.strip()))
-            return dt.datetime.fromtimestamp(epoch).date(), None
+            # Interpret the epoch in UTC (not the host's local zone) so the parsed
+            # date is identical regardless of where the ingestion runs (M8).
+            return dt.datetime.fromtimestamp(epoch, tz=dt.UTC).date(), None
         except (ValueError, OverflowError, OSError):
             return None, f"unparseable_date:{raw_date.strip()}"
 

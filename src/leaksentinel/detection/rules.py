@@ -26,17 +26,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import func, select
 
-from leaksentinel.reconciliation.engine import TOLERANCE
 from leaksentinel.reconciliation.models import (
     InsurerCommissionFeed,
     Policy,
     ReconciliationResult,
     Sale,
 )
+from leaksentinel.reconciliation.schemas import TOLERANCE
 
 # Deltas at/below TOLERANCE are "matched"; clean policies reconstruct to a delta
 # of 0.00 (rate-feed rounding error is <= ₹0.01). So a MATCHED policy whose
@@ -45,20 +45,45 @@ ROUNDING_MIN = Decimal("0.02")  # above clean reconstruction noise
 UNDERPAID_HIGH_SHORTFALL_PCT = Decimal("20")  # >= this is HIGH severity
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     INFO = "info"      # not actionable; recorded for completeness
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
 
 
-class DetectionReason(str, Enum):
+class DetectionReason(StrEnum):
+    """The single canonical reason-code vocabulary for the whole system.
+
+    The reconciliation engine maps its per-policy verdicts onto these same codes
+    at persist time (see ``engine.STATUS_TO_REASON``), so a recon row and the
+    finding for the same policy always carry the *same* reason_code string.
+    """
+
     MISSING_COMMISSION = "MISSING_COMMISSION"
     UNDERPAID_BELOW_RATE = "UNDERPAID_BELOW_RATE"
     DUPLICATE_PAYMENT = "DUPLICATE_PAYMENT"
     RENEWAL_1PLUS1_NOT_PROVISIONED = "RENEWAL_1PLUS1_NOT_PROVISIONED"
     ROUNDING_DELTA = "ROUNDING_DELTA"
     ANOMALY_UNCLASSIFIED = "ANOMALY_UNCLASSIFIED"  # emitted by anomaly.py
+    NO_MATCHING_POLICY = "NO_MATCHING_POLICY"      # orphan insurer payment
+    CRM_MISMATCH = "CRM_MISMATCH"                  # feed agrees, our CRM books differ
+    OK = "OK"                                      # matched / no leak
+
+
+# Exposure sign: which reason codes represent money owed TO us (true leakage)
+# vs. money we owe BACK (a clawback liability). They must never be summed into a
+# single "at risk" figure — opposite signs (M3).
+UNDERPAYMENT_REASONS: frozenset[str] = frozenset(
+    {
+        DetectionReason.MISSING_COMMISSION.value,
+        DetectionReason.UNDERPAID_BELOW_RATE.value,
+        DetectionReason.RENEWAL_1PLUS1_NOT_PROVISIONED.value,
+        DetectionReason.NO_MATCHING_POLICY.value,
+        DetectionReason.ANOMALY_UNCLASSIFIED.value,
+    }
+)
+CLAWBACK_REASONS: frozenset[str] = frozenset({DetectionReason.DUPLICATE_PAYMENT.value})
 
 
 @dataclass(frozen=True)
@@ -171,7 +196,7 @@ def detect_duplicate_payment(session) -> list[Finding]:
 
 
 def detect_renewal_1plus1_not_provisioned(session) -> list[Finding]:
-    """SureDrive's flagship 1+1 free-renewal leak.
+    """The distributor's flagship 1+1 free-renewal leak.
 
     A "1+1" sale promises the customer a second year of cover for free. The
     sale is flagged ``renewal_1plus1_eligible`` when we made that promise, and
@@ -236,6 +261,45 @@ def detect_rounding_delta(session) -> list[Finding]:
     ]
 
 
+def detect_unexpected_payment(session) -> list[Finding]:
+    """Surface orphan insurer payments — commission paid on a policy_no that is
+    not in our register (the engine tagged these ``UNEXPECTED_PAYMENT``).
+
+    We do not know what we are being paid for, so these are HIGH severity and
+    carry the non-actionable ``NO_MATCHING_POLICY`` reason code, which routes
+    them to a human via escalation rather than to an auto-claim.
+    """
+    rows = session.execute(
+        select(ReconciliationResult.policy_no, ReconciliationResult.actual).where(
+            ReconciliationResult.status == "UNEXPECTED_PAYMENT"
+        )
+    ).all()
+    if not rows:
+        return []
+
+    pnos = [p for p, _ in rows]
+    insurers = dict(
+        session.execute(
+            select(InsurerCommissionFeed.policy_no, InsurerCommissionFeed.insurer_name)
+            .where(InsurerCommissionFeed.policy_no.in_(pnos))
+        ).all()
+    )
+    return [
+        Finding(
+            policy_no=policy_no,
+            reason_code=DetectionReason.NO_MATCHING_POLICY.value,
+            severity=Severity.HIGH.value,
+            explanation=(
+                f"Insurer {insurers.get(policy_no, 'unknown')} paid commission "
+                f"₹{actual} on policy {policy_no} which does not exist in our policy "
+                f"register. Possible misparse or ghost policy."
+            ),
+            detector="rule:unexpected_payment",
+        )
+        for policy_no, actual in rows
+    ]
+
+
 # --------------------------------------------------------------------------- #
 # Orchestration helpers
 # --------------------------------------------------------------------------- #
@@ -245,6 +309,7 @@ RULE_DETECTORS = (
     detect_duplicate_payment,
     detect_renewal_1plus1_not_provisioned,
     detect_rounding_delta,
+    detect_unexpected_payment,
 )
 
 

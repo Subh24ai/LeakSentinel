@@ -1,7 +1,9 @@
 """SQLAlchemy engine / session plumbing.
 
-Skeleton only — defines the engine, session factory, and declarative base.
-Models will be added under their respective modules later.
+Defines the shared declarative ``Base``, the engine, and the session factory.
+Model modules import ``Base`` from here and register on its metadata; the
+lifecycle helpers below import every model module so a single call creates the
+full schema.
 """
 
 from __future__ import annotations
@@ -38,8 +40,9 @@ def _load_models() -> None:
     Imported lazily (inside the lifecycle functions) to avoid a circular
     import: model modules import ``Base`` from here.
     """
-    from leaksentinel.reconciliation import models  # noqa: F401
     from leaksentinel.actions import escalation, remediation  # noqa: F401
+    from leaksentinel.auth import users  # noqa: F401
+    from leaksentinel.reconciliation import models  # noqa: F401
 
 
 def create_all() -> None:

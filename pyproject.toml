@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Agentic commission-reconciliation engine for two-wheeler insurance distribution"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Proprietary" }
+license = { text = "MIT" }
 authors = [{ name = "Subhash Gupta", email = "subhashgupta2864@gmail.com" }]
 keywords = ["insurance", "commission", "reconciliation", "agentic", "langgraph"]
 
@@ -64,6 +64,9 @@ leaksentinel = ["py.typed"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-ra"
+markers = [
+    "integration: requires a live Postgres instance (and seeded synthetic data)",
+]
 
 [tool.ruff]
 line-length = 100
@@ -72,6 +75,16 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection idiom puts these calls in argument defaults by
+# design; they are not the mutable-default footgun B008 targets.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Security",
+    "fastapi.params.Depends",
+]
 
 [tool.mypy]
 python_version = "3.11"

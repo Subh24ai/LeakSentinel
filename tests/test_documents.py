@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 from sqlalchemy.exc import OperationalError
 
-from leaksentinel.db import SessionLocal, engine as db_engine
+from leaksentinel.db import SessionLocal
+from leaksentinel.db import engine as db_engine
 from leaksentinel.documents import extractor
 from leaksentinel.documents.extractor import (
     FIELD_MISMATCH,

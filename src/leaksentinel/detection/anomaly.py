@@ -88,7 +88,7 @@ def run_anomaly(
 
     # Keep the most anomalous score per policy, for outliers not covered by rules.
     best: dict[str, float] = {}
-    for policy_no, label, score in zip(policy_nos, labels, scores):
+    for policy_no, label, score in zip(policy_nos, labels, scores, strict=True):
         if label != -1 or policy_no in excluded:
             continue
         if policy_no not in best or score < best[policy_no]:

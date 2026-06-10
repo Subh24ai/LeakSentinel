@@ -21,8 +21,10 @@ import datetime as dt
 from decimal import Decimal
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
+    Float,
     ForeignKey,
     Numeric,
     String,
@@ -44,7 +46,7 @@ class Dealer(Base):
     oem: Mapped[str | None] = mapped_column(String(128))
     city: Mapped[str | None] = mapped_column(String(128))
 
-    sales: Mapped[list["Sale"]] = relationship(back_populates="dealer")
+    sales: Mapped[list[Sale]] = relationship(back_populates="dealer")
 
 
 class Sale(Base):
@@ -63,7 +65,7 @@ class Sale(Base):
     vehicle_reg: Mapped[str | None] = mapped_column(String(32), index=True)
     sale_date: Mapped[dt.date | None] = mapped_column()
     rsa_subscription_id: Mapped[str | None] = mapped_column(String(64), index=True)
-    # SureDrive's flagship "1+1" free-renewal: the customer is owed a second
+    # The distributor's flagship "1+1" free-renewal: the customer is owed a second
     # year. ``eligible`` means we promised it; ``provisioned`` means we actually
     # booked it. eligible & not provisioned => leakage owed to the customer.
     renewal_1plus1_eligible: Mapped[bool] = mapped_column(
@@ -73,8 +75,8 @@ class Sale(Base):
         Boolean, nullable=False, server_default="false", default=False
     )
 
-    dealer: Mapped["Dealer | None"] = relationship(back_populates="sales")
-    policies: Mapped[list["Policy"]] = relationship(back_populates="sale")
+    dealer: Mapped[Dealer | None] = relationship(back_populates="sales")
+    policies: Mapped[list[Policy]] = relationship(back_populates="sale")
 
 
 class Policy(Base):
@@ -96,7 +98,7 @@ class Policy(Base):
     sale_id: Mapped[int | None] = mapped_column(ForeignKey("sales.id"))
     issued_date: Mapped[dt.date | None] = mapped_column()
 
-    sale: Mapped["Sale | None"] = relationship(back_populates="policies")
+    sale: Mapped[Sale | None] = relationship(back_populates="policies")
 
 
 class InsurerCommissionFeed(Base):
@@ -156,14 +158,66 @@ class ReconciliationResult(Base):
     resolution_state: Mapped[str | None] = mapped_column(String(32), index=True)
 
 
+class ReconciliationRun(Base):
+    """One end-to-end pipeline execution. The ``findings`` rows from a run share
+    its ``id`` (``run_id``), so reads can pin to the latest completed run."""
+
+    __tablename__ = "reconciliation_runs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid4 hex-with-dashes
+    started_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(16), nullable=False)  # running|complete|failed
+    summary: Mapped[dict | None] = mapped_column(JSON)
+
+
+class PersistedFinding(Base):
+    """A detector finding materialised once per pipeline run.
+
+    The read API serves leaks straight from this table (filtered to the latest
+    completed ``run_id``) instead of re-running the rule detectors and the
+    Isolation Forest on every request — the model is fit exactly once per run.
+    """
+
+    __tablename__ = "findings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    policy_no: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    insurer: Mapped[str | None] = mapped_column(String(128))
+    reason_code: Mapped[str] = mapped_column(String(64), nullable=False)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    detector: Mapped[str] = mapped_column(String(64), nullable=False)
+    score: Mapped[float | None] = mapped_column(Float)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    recon_status: Mapped[str | None] = mapped_column(String(32))
+    resolution_state: Mapped[str | None] = mapped_column(String(32))
+    disposition: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class AuditLog(Base):
-    """Append-only record of every mutating action taken by the engine."""
+    """Append-only, hash-chained record of every mutating action taken by the
+    engine. See :func:`leaksentinel.actions.remediation.record_audit` for the
+    chain construction; a broken chain or a gap in ``sequence_no`` is evidence
+    of tampering."""
 
     __tablename__ = "audit_log"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # Monotonic, gap-free ordering independent of timestamps. UNIQUE so a gap or
+    # a duplicate is itself evidence of tampering.
+    sequence_no: Mapped[int] = mapped_column(nullable=False, unique=True, index=True)
     action: Mapped[str] = mapped_column(String(128), nullable=False)
+    # Chained hash: sha256(prev_hash + canonical_json(payload)). Reordering or
+    # deleting a row breaks every subsequent hash.
     payload_sha256: Mapped[str | None] = mapped_column(String(64))
+    prev_hash: Mapped[str | None] = mapped_column(String(64))  # None only for the first row
     actor: Mapped[str | None] = mapped_column(String(128))
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

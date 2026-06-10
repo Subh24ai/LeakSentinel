@@ -1,1 +1,1 @@
-"""LeakSentinel api module (skeleton)."""
+"""FastAPI surface: authenticated HTTP endpoints over the reconciliation pipeline."""

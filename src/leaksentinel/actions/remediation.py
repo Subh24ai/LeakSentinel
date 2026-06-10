@@ -19,9 +19,10 @@ we reproduce the same four properties by hand and TEST each one:
   3. *Gate* side effects. No external API call and no row write happen until the
      gate passes. A blocked action refuses loudly and writes nothing except an
      audit row.
-  4. Keep an *immutable audit trail*. Every action AND every blocked attempt
-     appends to ``audit_log`` with a SHA-256 of the action payload, so any
-     decision is reconstructable after the fact.
+  4. Keep an *append-only, hash-chained audit trail*. Every action AND every
+     blocked attempt appends to ``audit_log`` with a chained SHA-256 of the
+     payload, so any decision is reconstructable — and tampering is detectable —
+     after the fact.
 
 The insurer/CRM call itself is hidden behind :class:`ExternalClaimsAPI` (a local
 stub in :mod:`leaksentinel.actions.externalapi`) so it is obviously swappable for
@@ -35,10 +36,12 @@ import hashlib
 import json
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
-from enum import Enum
+from enum import StrEnum
 
-from sqlalchemy import DateTime, Numeric, String, func, select
+from sqlalchemy import DateTime, Index, Numeric, String, func, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, Session, mapped_column
+from sqlalchemy.orm.exc import StaleDataError
 
 from leaksentinel.actions.externalapi import ExternalClaimsAPI
 from leaksentinel.db import Base, SessionLocal
@@ -74,6 +77,13 @@ VALID_REASON_CODES: frozenset[str] = frozenset(
 # The only resolution state we consider a *confirmed, open* leak worth acting on.
 CONFIRMED_STATE = ResolutionState.OPEN.value
 
+# Claim lifecycle. A claim is "active" until it reaches CLAIM_CLOSED; the partial
+# unique index below only constrains active claims, so a fresh leak on the same
+# (policy_no, reason_code) can be re-claimed after the prior claim is closed.
+CLAIM_PENDING = "pending"      # row reserved, insurer not yet called
+CLAIM_SUBMITTED = "submitted"  # lodged with the insurer
+CLAIM_CLOSED = "closed"        # settled / written off — no longer active
+
 
 # --------------------------------------------------------------------------- #
 # ORM: the commission_claims table ("we are claiming this shortfall back")
@@ -81,9 +91,16 @@ CONFIRMED_STATE = ResolutionState.OPEN.value
 class CommissionClaim(Base):
     """A shortfall we are claiming back from the insurer.
 
-    ``idempotency_key`` is UNIQUE — that database constraint is the last line of
-    defence behind the in-code check: even under a race, two retries can never
-    create two claims for the same (policy_no, reason_code, amount).
+    Uniqueness is enforced by a **partial unique index** on
+    ``(policy_no, reason_code)`` restricted to *active* claims (``status`` other
+    than ``closed``). That database constraint — not a SELECT-then-INSERT in the
+    application — is the authority: even under a concurrent race, two callers can
+    never create two active claims for the same logical leak. The loser of the
+    race hits the index, rolls back its savepoint, and returns the existing row.
+
+    ``idempotency_key`` is the stable key handed to the insurer (derived from
+    ``policy_no`` + ``reason_code``); it is indexed but intentionally NOT globally
+    unique, so a closed claim does not block re-claiming a recurrence later.
     """
 
     __tablename__ = "commission_claims"
@@ -92,13 +109,24 @@ class CommissionClaim(Base):
     policy_no: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     claim_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     reason_code: Mapped[str] = mapped_column(String(64), nullable=False)
-    idempotency_key: Mapped[str] = mapped_column(
-        String(64), nullable=False, unique=True, index=True
-    )
+    idempotency_key: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     external_ref: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        # One ACTIVE claim per (policy_no, reason_code). Closed claims are exempt,
+        # so a later recurrence can be claimed afresh. Works on Postgres and SQLite.
+        Index(
+            "uq_commission_claims_active",
+            "policy_no",
+            "reason_code",
+            unique=True,
+            postgresql_where=text("status <> 'closed'"),
+            sqlite_where=text("status <> 'closed'"),
+        ),
     )
 
 
@@ -124,7 +152,7 @@ class ActionableFinding:
 # --------------------------------------------------------------------------- #
 # The gate (property #1 + #3): judgment is separate from, and blocks, the action
 # --------------------------------------------------------------------------- #
-class GateCode(str, Enum):
+class GateCode(StrEnum):
     """Why the gate allowed or refused an action."""
 
     OK = "OK"
@@ -184,23 +212,29 @@ def _money(value: Decimal) -> Decimal:
 
 
 def idempotency_key(finding: ActionableFinding) -> str:
-    """SHA-256 of policy_no + reason_code + amount.
+    """SHA-256 of the logical claim identity ``(policy_no, reason_code)``.
 
-    Amount is canonicalised to 2dp so ``100`` and ``100.00`` hash identically;
-    the same logical claim always produces the same key, which is what makes a
-    retry a no-op.
+    The amount is deliberately NOT part of the key: a data correction that
+    changes the shortfall must *update* the existing claim, not mint a second one
+    (the same fact is being claimed). Encoding via ``json.dumps`` of a list
+    avoids delimiter-injection ambiguity that an f-string with ``|`` separators
+    would allow if a field ever contained the separator.
     """
-    raw = f"{finding.policy_no}|{finding.reason_code}|{_money(finding.amount)}"
+    raw = json.dumps([finding.policy_no, finding.reason_code], sort_keys=True)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 # --------------------------------------------------------------------------- #
 # Audit trail (property #4) — shared by remediation AND escalation
 # --------------------------------------------------------------------------- #
+def _canonical_payload(payload: dict) -> str:
+    """Stable JSON encoding of an action payload (sorted keys)."""
+    return json.dumps(payload, sort_keys=True, default=str)
+
+
 def payload_hash(payload: dict) -> str:
-    """SHA-256 of a canonical JSON encoding of the action payload."""
-    blob = json.dumps(payload, sort_keys=True, default=str)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+    """SHA-256 of the canonical JSON encoding of a single action payload."""
+    return hashlib.sha256(_canonical_payload(payload).encode("utf-8")).hexdigest()
 
 
 def record_audit(
@@ -211,15 +245,34 @@ def record_audit(
     actor: str,
     detail: str,
 ) -> AuditLog:
-    """Append one immutable row to ``audit_log`` and return it.
+    """Append one row to the append-only, hash-chained ``audit_log`` and return it.
 
     Called for EVERY action and EVERY blocked attempt — the audit row is the one
     write that is never gated, because "we refused to act" is itself a fact we
     must be able to prove later.
+
+    The row's ``payload_sha256`` is ``sha256(prev_hash + canonical_json(payload))``
+    and ``prev_hash`` is the previous row's hash, so deleting or reordering any
+    row breaks the chain from that point on; ``sequence_no`` is gap-free and
+    UNIQUE, so a missing row is detectable even without recomputing hashes.
     """
+    last = session.execute(
+        select(AuditLog.sequence_no, AuditLog.payload_sha256)
+        .order_by(AuditLog.sequence_no.desc())
+        .limit(1)
+    ).first()
+    prev_seq = last.sequence_no if last is not None else 0
+    prev_hash = (last.payload_sha256 if last is not None else None) or ""
+
+    chained = hashlib.sha256(
+        (prev_hash + _canonical_payload(payload)).encode("utf-8")
+    ).hexdigest()
+
     entry = AuditLog(
+        sequence_no=prev_seq + 1,
         action=action,
-        payload_sha256=payload_hash(payload),
+        payload_sha256=chained,
+        prev_hash=(prev_hash or None),
         actor=actor,
         detail=detail,
     )
@@ -228,10 +281,33 @@ def record_audit(
     return entry
 
 
+def verify_audit_chain(session: Session) -> tuple[bool, str | None]:
+    """Verify the audit log's integrity. Returns ``(ok, reason)``.
+
+    Checks, in ``sequence_no`` order, that (a) the sequence is gap-free from 1
+    and (b) each row's ``prev_hash`` links to the previous row's hash. A deleted
+    or reordered row breaks one of these, so ``ok=False`` is tamper evidence.
+    """
+    rows = (
+        session.execute(select(AuditLog).order_by(AuditLog.sequence_no))
+        .scalars()
+        .all()
+    )
+    prev: AuditLog | None = None
+    for i, row in enumerate(rows, start=1):
+        if row.sequence_no != i:
+            return False, f"sequence gap: expected {i}, found {row.sequence_no}"
+        expected_link = prev.payload_sha256 if prev is not None else None
+        if (row.prev_hash or None) != (expected_link or None):
+            return False, f"broken hash chain at sequence_no {row.sequence_no}"
+        prev = row
+    return True, None
+
+
 # --------------------------------------------------------------------------- #
 # Action outcome
 # --------------------------------------------------------------------------- #
-class OutcomeStatus(str, Enum):
+class OutcomeStatus(StrEnum):
     CREATED = "created"     # a new record was written
     EXISTING = "existing"   # idempotent hit: returned the prior record
     BLOCKED = "blocked"     # the gate refused; nothing written but an audit row
@@ -313,20 +389,54 @@ def create_commission_claim(
                 idempotency_key=key,
             )
 
-        # (2) IDEMPOTENCY — a retry returns the existing claim, never a duplicate.
-        existing = sess.execute(
-            select(CommissionClaim).where(CommissionClaim.idempotency_key == key)
-        ).scalar_one_or_none()
-        if existing is not None:
+        # (2) RESERVE — INSERT the claim first, inside a SAVEPOINT, so the DB's
+        # partial unique index (not a racy SELECT) arbitrates who wins. The
+        # insurer is NOT contacted yet — we only talk to them once the row is ours.
+        amount = _money(finding.amount)
+        claim = CommissionClaim(
+            policy_no=finding.policy_no,
+            claim_amount=amount,
+            reason_code=finding.reason_code,
+            idempotency_key=key,
+            status=CLAIM_PENDING,
+        )
+        try:
+            with sess.begin_nested():
+                sess.add(claim)
+                sess.flush()
+        except IntegrityError:
+            # (3) IDEMPOTENT — an active claim already exists for this leak: this
+            # is a retry, or we lost a concurrent race. Return the existing row;
+            # never a second row, and crucially never a second insurer call. A
+            # changed amount UPDATES the existing claim in place (data correction).
+            if claim in sess.new:
+                sess.expunge(claim)
+            existing = sess.execute(
+                select(CommissionClaim).where(
+                    CommissionClaim.policy_no == finding.policy_no,
+                    CommissionClaim.reason_code == finding.reason_code,
+                    CommissionClaim.status != CLAIM_CLOSED,
+                )
+            ).scalars().first()
+            updated = existing is not None and existing.claim_amount != amount
+            if updated:
+                existing.claim_amount = amount
+                sess.flush()
             audit = record_audit(
                 sess,
                 action="create_commission_claim:IDEMPOTENT",
-                payload={**base_payload, "claim_id": existing.id},
+                payload={
+                    **base_payload,
+                    "claim_id": existing.id if existing else None,
+                    "amount_updated": updated,
+                },
                 actor=actor,
                 detail=(
-                    f"idempotent retry for {finding.policy_no}: returned existing "
-                    f"claim #{existing.id} (₹{existing.claim_amount}); no new claim, "
-                    f"no second insurer call."
+                    f"idempotent retry for {finding.policy_no}: active claim "
+                    f"#{existing.id if existing else '?'} already exists "
+                    f"(₹{existing.claim_amount if existing else '?'}); "
+                    + ("amount updated in place; " if updated else "")
+                    + "no new claim, no second insurer call."
                 ),
             )
             if owned:
@@ -340,22 +450,16 @@ def create_commission_claim(
                 claim=existing,
             )
 
-        # (3) ACT — external call, then persist, then audit the success.
+        # (4) ACT — the row is ours. Now (and only now) call the insurer exactly
+        # once, flip the status to submitted, and audit the success.
         resp = used_api.submit_claim(
             policy_no=finding.policy_no,
-            amount=_money(finding.amount),
+            amount=amount,
             reason_code=finding.reason_code,
             idempotency_key=key,
         )
-        claim = CommissionClaim(
-            policy_no=finding.policy_no,
-            claim_amount=_money(finding.amount),
-            reason_code=finding.reason_code,
-            idempotency_key=key,
-            status="submitted",
-            external_ref=resp.get("external_ref"),
-        )
-        sess.add(claim)
+        claim.status = CLAIM_SUBMITTED
+        claim.external_ref = resp.get("external_ref")
         sess.flush()
         audit = record_audit(
             sess,
@@ -468,15 +572,42 @@ def flag_for_rebilling(
                 idempotency_key=key,
             )
 
-        # (3) ACT — flip the record(s), tell the billing system, audit.
-        for r in rows:
-            r.resolution_state = ResolutionState.DISPUTED.value
+        # (3) ACT — flip the record(s) inside a SAVEPOINT so a concurrent flip
+        # cannot double-apply, and only contact the billing system once the flip
+        # is durably ours.
+        try:
+            with sess.begin_nested():
+                for r in rows:
+                    r.resolution_state = ResolutionState.DISPUTED.value
+                sess.flush()
+        except (IntegrityError, StaleDataError):
+            # Lost a concurrent race: another worker already flipped these rows.
+            # Idempotent — no billing call, no change.
+            audit = record_audit(
+                sess,
+                action="flag_for_rebilling:IDEMPOTENT",
+                payload=base_payload,
+                actor=actor,
+                detail=(
+                    f"concurrent retry for {finding.policy_no}: rebilling already "
+                    f"applied by another worker; no change, no second billing call."
+                ),
+            )
+            if owned:
+                sess.commit()
+            return RemediationOutcome(
+                status=OutcomeStatus.EXISTING,
+                finding=finding,
+                decision=decision,
+                audit_id=audit.id,
+                idempotency_key=key,
+            )
+
         resp = used_api.request_rebilling(
             policy_no=finding.policy_no,
             reason_code=finding.reason_code,
             idempotency_key=key,
         )
-        sess.flush()
         audit = record_audit(
             sess,
             action="flag_for_rebilling",

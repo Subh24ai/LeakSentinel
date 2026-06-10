@@ -31,7 +31,7 @@ import csv
 import json
 import random
 from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
@@ -156,8 +156,9 @@ def render_bajaj(rec: PolicyRecord, paid: Decimal, rng: random.Random) -> dict:
 
 
 def render_digit(rec: PolicyRecord, paid: Decimal, rng: random.Random) -> dict:
-    # Absolute amount, epoch seconds, embedded ref.
-    epoch = int(datetime.combine(rec.paid_date, time(12, 0)).timestamp())
+    # Absolute amount, epoch seconds (UTC), embedded ref. Noon UTC keeps the
+    # round-trip date stable for any reader timezone (M8).
+    epoch = int(datetime.combine(rec.paid_date, time(12, 0), tzinfo=timezone.utc).timestamp())
     return {
         "ReferenceID": _ref_digit(rec),
         "PremiumAmount": f"{rec.premium:.2f}",

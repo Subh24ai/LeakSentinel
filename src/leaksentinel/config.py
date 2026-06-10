@@ -6,14 +6,14 @@ directly. Supports two LLM providers: Anthropic (default) and Groq.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class LLMProvider(str, Enum):
+class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"
     GROQ = "groq"
 
@@ -51,6 +51,19 @@ class Settings(BaseSettings):
     langsmith_api_key: str | None = None
     langsmith_tracing: bool = False
     langsmith_project: str = "leaksentinel"
+
+    # Auth / JWT.
+    # ``jwt_secret`` has NO hardcoded fallback: the API refuses to boot without it
+    # (see the startup guard in api.main). It is Optional here only so that
+    # unrelated imports (scripts, migrations, unit tests) don't fail at import
+    # time — auth code calls ``require_jwt_secret`` and raises if it is unset.
+    jwt_secret: str | None = None
+    jwt_algorithm: str = "HS256"
+    jwt_expiry_hours: int = 8
+    # Bootstrap: on first startup, if no users exist and a password is configured,
+    # an admin user is created with these credentials.
+    first_admin_email: str = "admin@leaksentinel.local"
+    first_admin_password: str | None = None
 
     @property
     def active_llm_model(self) -> str:

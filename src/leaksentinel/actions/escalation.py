@@ -24,7 +24,7 @@ import datetime as dt
 import json
 from dataclasses import dataclass
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 from sqlalchemy import DateTime, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, Session, mapped_column
@@ -58,7 +58,7 @@ _CLAIMABLE = {
 }
 
 
-class EscalationReason(str, Enum):
+class EscalationReason(StrEnum):
     """Why a finding was routed to a human instead of auto-remediated."""
 
     HIGH_VALUE = "HIGH_VALUE"                # amount >= ESCALATION_THRESHOLD

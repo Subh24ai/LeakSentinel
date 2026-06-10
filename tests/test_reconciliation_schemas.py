@@ -2,10 +2,9 @@
 
 from decimal import Decimal
 
+from leaksentinel.detection.rules import DetectionReason
 from leaksentinel.reconciliation.schemas import (
-    ReasonCode,
     ReconciliationView,
-    ReconStatus,
     ResolutionState,
 )
 
@@ -28,6 +27,7 @@ def test_view_delta_when_amounts_present() -> None:
 
 
 def test_enum_values() -> None:
-    assert ReconStatus.SHORT_PAID.value == "short_paid"
-    assert ReasonCode.AMOUNT_MISMATCH.value == "AMOUNT_MISMATCH"
+    # The single canonical reason vocabulary now lives in DetectionReason.
+    assert DetectionReason.UNDERPAID_BELOW_RATE.value == "UNDERPAID_BELOW_RATE"
+    assert DetectionReason.DUPLICATE_PAYMENT.value == "DUPLICATE_PAYMENT"
     assert ResolutionState.OPEN.value == "open"

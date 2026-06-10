@@ -1,1 +1,1 @@
-"""LeakSentinel documents module (skeleton)."""
+"""Document intelligence: vision-LLM extraction of insurance PDFs and field validation."""

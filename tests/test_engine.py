@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 from sqlalchemy.exc import OperationalError
 
-from leaksentinel.db import SessionLocal, engine as db_engine
+from leaksentinel.db import SessionLocal
+from leaksentinel.db import engine as db_engine
 from leaksentinel.ingestion import loader
 from leaksentinel.reconciliation import engine
 from leaksentinel.reconciliation.engine import (
@@ -27,6 +28,8 @@ from leaksentinel.reconciliation.models import Policy
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "synthetic"
 GROUND_TRUTH = DATA_DIR / "ground_truth.json"
+
+pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(scope="module")

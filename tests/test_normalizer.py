@@ -97,7 +97,7 @@ def test_commission_amount_matches_ground_truth(insurer, ground_truth):
         expected = sorted(Decimal(str(p)) for p in info["paid_entries"])
         actual = sorted(amounts)
         assert len(actual) == len(expected)
-        for a, e in zip(actual, expected):
+        for a, e in zip(actual, expected, strict=True):
             assert abs(a - e) <= Decimal("0.01"), (
                 f"{insurer} {policy_no}: got {a}, expected {e}"
             )
