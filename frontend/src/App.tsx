@@ -1,5 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 
+import { AuthProvider } from "./auth/AuthContext";
+import { LoginPage } from "./auth/LoginPage";
+import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { Layout } from "./components/Layout";
 import { AuditEscalations } from "./pages/AuditEscalations";
 import { Dashboard } from "./pages/Dashboard";
@@ -8,13 +11,21 @@ import { Leaks } from "./pages/Leaks";
 
 export function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="leaks" element={<Leaks />} />
-        <Route path="leaks/:policyNo" element={<LeakDetail />} />
-        <Route path="audit" element={<AuditEscalations />} />
-      </Route>
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        {/* Public */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Everything else requires a token */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="leaks" element={<Leaks />} />
+            <Route path="leaks/:policyNo" element={<LeakDetail />} />
+            <Route path="audit" element={<AuditEscalations />} />
+          </Route>
+        </Route>
+      </Routes>
+    </AuthProvider>
   );
 }

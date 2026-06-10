@@ -129,6 +129,34 @@ export interface Metrics {
   disposition: DispositionCounts;
 }
 
+// --- auth token (in memory only — never localStorage) ---------------------- //
+// The token's source of truth is React state in AuthContext; it is mirrored here
+// so the (non-React) fetch wrapper can attach the Authorization header. On logout
+// or a page refresh both clear — nothing is persisted to disk.
+let authToken: string | null = null;
+let onUnauthorized: (() => void) | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
+/** Register the handler invoked on any 401 (AuthContext wires this to logout). */
+export function setUnauthorizedHandler(fn: (() => void) | null): void {
+  onUnauthorized = fn;
+}
+
+// --- auth response types --------------------------------------------------- //
+export interface Token {
+  access_token: string;
+  token_type: string;
+}
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  role: string;
+}
+
 // --- fetch wrapper --------------------------------------------------------- //
 export class ApiError extends Error {
   status: number;
@@ -139,18 +167,32 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  opts?: { skipAuthRedirect?: boolean },
+): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...(init?.headers as Record<string, string> | undefined),
+  };
+  if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
   let resp: Response;
   try {
-    resp = await fetch(`${API_BASE}${path}`, {
-      headers: { Accept: "application/json" },
-      ...init,
-    });
+    resp = await fetch(`${API_BASE}${path}`, { ...init, headers });
   } catch {
     throw new ApiError(
       0,
       `Cannot reach the API at ${API_BASE}. Is the backend running?`,
     );
+  }
+
+  // 401 interceptor: any expired/invalid token logs the user out and bounces
+  // them to /login. Skipped for the login call itself (a bad password is a form
+  // error, not a session expiry).
+  if (resp.status === 401 && !opts?.skipAuthRedirect) {
+    onUnauthorized?.();
   }
 
   if (!resp.ok) {
@@ -178,6 +220,22 @@ function query(params: Record<string, string | null | undefined>): string {
 // --- endpoints ------------------------------------------------------------- //
 export const api = {
   base: API_BASE,
+
+  // OAuth2 password flow: the token endpoint expects form-encoded credentials.
+  login: (email: string, password: string) => {
+    const body = new URLSearchParams({ username: email, password });
+    return request<Token>(
+      "/auth/token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      },
+      { skipAuthRedirect: true },
+    );
+  },
+
+  getMe: () => request<AuthUser>("/auth/me"),
 
   getMetrics: () => request<Metrics>("/metrics"),
 

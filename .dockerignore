@@ -1,0 +1,24 @@
+# Keep the backend build context small and reproducible.
+.venv
+**/__pycache__
+*.pyc
+*.pyo
+.git
+.github
+.pytest_cache
+.ruff_cache
+.mypy_cache
+*.egg-info
+.coverage
+htmlcov
+
+# Not needed in the backend image.
+frontend
+docs
+data
+tests
+
+# Never bake secrets into an image (compose injects .env at runtime).
+.env
+.env.*
+!.env.example

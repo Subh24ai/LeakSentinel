@@ -420,9 +420,16 @@ def write_ground_truth(records: list[PolicyRecord], feed_counts: dict[str, int])
 # --------------------------------------------------------------------------- #
 # DB load
 # --------------------------------------------------------------------------- #
-def load_into_db(records: list[PolicyRecord]) -> None:
-    """Reset the schema and load dealers/sales/policies/crm (feeds stay as CSV)."""
-    reset_database()
+def load_into_db(records: list[PolicyRecord], reset: bool = True) -> None:
+    """Load dealers/sales/policies/crm (feeds stay as CSV).
+
+    ``reset=True`` (default) drops and recreates the schema first — the normal
+    dev path. ``reset=False`` inserts into an existing, empty, migration-managed
+    schema without dropping anything (used by the Docker ``worker`` so it doesn't
+    wipe the Alembic-stamped tables or the bootstrapped admin user).
+    """
+    if reset:
+        reset_database()
     session = SessionLocal()
     try:
         # Dealers
@@ -547,13 +554,24 @@ def validate_against_db(records: list[PolicyRecord]) -> bool:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate synthetic LeakSentinel data.")
+    parser.add_argument(
+        "--no-reset",
+        action="store_true",
+        help="Insert into the existing schema without dropping it (for migration-"
+        "managed databases). Default drops and recreates the schema.",
+    )
+    args = parser.parse_args()
+
     rng = random.Random(SEED)
 
     records = build_records(rng)
     assign_scenarios(records, rng)
     feed_counts = write_feeds(records, rng)
     gt_path = write_ground_truth(records, feed_counts)
-    load_into_db(records)
+    load_into_db(records, reset=not args.no_reset)
 
     print_summary(records, feed_counts)
     print(f"\nGround truth written to: {gt_path}")

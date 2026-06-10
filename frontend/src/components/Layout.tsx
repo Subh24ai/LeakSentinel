@@ -1,8 +1,11 @@
 import { NavLink, Outlet } from "react-router-dom";
 
-import { IconAudit, IconDashboard, IconLeaks } from "./icons";
+import { useAuth } from "../auth/AuthContext";
+import { IconAudit, IconDashboard, IconLeaks, IconLogout } from "./icons";
 
 export function Layout() {
+  const { user, logout } = useAuth();
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -29,6 +32,17 @@ export function Layout() {
             Audit &amp; Escalations
           </NavLink>
         </nav>
+
+        <div className="user-box">
+          <div className="user-meta">
+            <div className="user-email">{user?.email ?? "Signed in"}</div>
+            {user?.role && <div className="user-role">{user.role}</div>}
+          </div>
+          <button className="btn-logout" onClick={logout} title="Sign out">
+            <IconLogout />
+            <span>Sign out</span>
+          </button>
+        </div>
 
         <div className="sidebar-foot">
           Synthetic data only. No real insurer statements or customer records.

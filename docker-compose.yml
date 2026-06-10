@@ -1,22 +1,94 @@
+# Full LeakSentinel stack: Postgres + backend (API) + worker (one-shot seed) +
+# frontend (nginx). Bring it all up with:  docker compose up -d --build
+#
+# Copy .env.example to .env first (JWT_SECRET and FIRST_ADMIN_PASSWORD are
+# required for the API to start and for login to work).
+
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15
     container_name: leaksentinel-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: leaksentinel
-      POSTGRES_PASSWORD: leaksentinel
-      POSTGRES_DB: leaksentinel
+      POSTGRES_DB: ${POSTGRES_DB:-leaksentinel}
+      POSTGRES_USER: ${POSTGRES_USER:-leaksentinel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-leaksentinel}
     ports:
-      # Host 5433 -> container 5432 (5432 is often taken by another local Postgres)
+      # Exposed on host 5433 for non-Docker local dev (make migrate / test / run);
+      # the other services reach it over the compose network on 5432.
       - "5433:5432"
-    volumes:
-      - leaksentinel_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U leaksentinel -d leaksentinel"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leaksentinel} -d ${POSTGRES_DB:-leaksentinel}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    image: leaksentinel-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Point the app at the postgres service on the compose network (overrides
+      # whatever DATABASE_URL is in .env, which is for host-local dev).
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-leaksentinel}:${POSTGRES_PASSWORD:-leaksentinel}@postgres:5432/${POSTGRES_DB:-leaksentinel}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Shared with the worker: the worker writes the insurer CSVs here and the
+      # backend's pipeline intake re-ingests them on each /reconcile run.
+      - synthetic_data:/app/data/synthetic
+    command: sh -c "alembic upgrade head && uvicorn leaksentinel.api.main:app --host 0.0.0.0 --port 8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  worker:
+    # Same image as the backend, different command. One-shot: seeds the database
+    # on first run only (guarded by a flag file on a named volume), then exits.
+    image: leaksentinel-backend
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-leaksentinel}:${POSTGRES_PASSWORD:-leaksentinel}@postgres:5432/${POSTGRES_DB:-leaksentinel}
+    volumes:
+      - worker_state:/seeded
+      - synthetic_data:/app/data/synthetic
+    command:
+      - sh
+      - -c
+      - >-
+        [ -f /seeded/.done ] && echo "already seeded; skipping" ||
+        ( python scripts/init_db.py --dev &&
+          python scripts/generate_synthetic_data.py --no-reset &&
+          python -m leaksentinel.ingestion.loader &&
+          touch /seeded/.done &&
+          echo "seed complete" )
+    restart: "no"
+
+  frontend:
+    build: ./frontend
+    image: leaksentinel-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
 
 volumes:
-  leaksentinel_pgdata:
+  postgres_data:
+  worker_state:
+  synthetic_data:
