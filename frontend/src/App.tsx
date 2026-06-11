@@ -4,10 +4,12 @@ import { AdminRoute } from "./auth/AdminRoute";
 import { AuthProvider } from "./auth/AuthContext";
 import { LoginPage } from "./auth/LoginPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { WriteRoute } from "./auth/WriteRoute";
 import { Layout } from "./components/Layout";
 import { AuditEscalations } from "./pages/AuditEscalations";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { Dashboard } from "./pages/Dashboard";
+import { FeedsPage } from "./pages/FeedsPage";
 import { LeakDetail } from "./pages/LeakDetail";
 import { Leaks } from "./pages/Leaks";
 import { UsersPage } from "./pages/UsersPage";
@@ -30,6 +32,10 @@ export function App() {
             <Route path="leaks" element={<Leaks />} />
             <Route path="leaks/:policyNo" element={<LeakDetail />} />
             <Route path="audit" element={<AuditEscalations />} />
+            {/* Ops + admin */}
+            <Route element={<WriteRoute />}>
+              <Route path="feeds" element={<FeedsPage />} />
+            </Route>
             {/* Admin only */}
             <Route element={<AdminRoute />}>
               <Route path="users" element={<UsersPage />} />

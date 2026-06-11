@@ -117,6 +117,37 @@ export interface DispositionCounts {
   informational: number;
 }
 
+export interface FeedUpload {
+  id: number;
+  filename: string;
+  insurer_name: string;
+  file_type: string;
+  file_size_bytes: number;
+  status: string; // uploaded | processing | processed | failed
+  rows_extracted: number | null;
+  rows_loaded: number | null;
+  error_message: string | null;
+  uploaded_by: string;
+  uploaded_at: string;
+  processed_at: string | null;
+}
+
+export interface ReconcileJob {
+  id: string;
+  status: string; // queued | running | complete | failed
+  triggered_by: string;
+  queued_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  error_message: string | null;
+  summary: ReconcileSummary | null;
+}
+
+export interface ReconcileAccepted {
+  job_id: string;
+  status: string;
+}
+
 export interface Metrics {
   policies_processed: number;
   policies_with_leaks: number;
@@ -284,7 +315,20 @@ export const api = {
 
   getMetrics: () => request<Metrics>("/metrics"),
 
-  runReconcile: () => request<ReconcileSummary>("/reconcile", { method: "POST" }),
+  // Async reconcile: enqueue a job (202), then poll for completion.
+  runReconcile: () => request<ReconcileAccepted>("/reconcile", { method: "POST" }),
+  getReconcileJob: (jobId: string) => request<ReconcileJob>(`/reconcile/${jobId}`),
+  getReconcileJobs: () => request<ReconcileJob[]>("/reconcile/jobs"),
+
+  // Feed uploads (multipart; the browser sets the Content-Type boundary).
+  uploadFeed: (file: File, insurer: string) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("insurer_name", insurer);
+    return request<FeedUpload>("/feeds/upload", { method: "POST", body: fd });
+  },
+  getFeeds: () => request<FeedUpload[]>("/feeds"),
+  getFeed: (id: number) => request<FeedUpload>(`/feeds/${id}`),
 
   getLeaks: (filters: {
     status?: string;

@@ -42,6 +42,7 @@ dependencies = [
     "python-multipart>=0.0.12",
     "reportlab>=4.0",   # generate synthetic PDF documents
     "pymupdf>=1.24",    # rasterize PDF pages to images for vision extraction
+    "pdfplumber>=0.11", # extract tables from uploaded PDF feeds
 ]
 
 [project.optional-dependencies]
@@ -86,6 +87,8 @@ extend-immutable-calls = [
     "fastapi.Depends",
     "fastapi.Query",
     "fastapi.Security",
+    "fastapi.File",
+    "fastapi.Form",
     "fastapi.params.Depends",
 ]
 

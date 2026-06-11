@@ -40,3 +40,6 @@ data/synthetic/*.parquet
 
 # Postgres volume (if mounted locally)
 .pgdata/
+
+# Uploaded insurer feed files
+uploads/

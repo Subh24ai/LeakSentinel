@@ -212,6 +212,28 @@ class AuditItem(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# Feed uploads
+# --------------------------------------------------------------------------- #
+class FeedUploadOut(BaseModel):
+    """An ``insurer_feed_uploads`` row and its processing outcome."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    filename: str
+    insurer_name: str
+    file_type: str
+    file_size_bytes: int
+    status: str
+    rows_extracted: int | None = None
+    rows_loaded: int | None = None
+    error_message: str | None = None
+    uploaded_by: str
+    uploaded_at: dt.datetime
+    processed_at: dt.datetime | None = None
+
+
+# --------------------------------------------------------------------------- #
 # Reconcile run + dashboard metrics
 # --------------------------------------------------------------------------- #
 class ConservationCheck(BaseModel):
@@ -220,6 +242,28 @@ class ConservationCheck(BaseModel):
     accounted: int
     total: int
     ok: bool
+
+
+class ReconcileJobOut(BaseModel):
+    """A reconciliation job's status (polled by the client)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    status: str
+    triggered_by: str
+    queued_at: dt.datetime
+    started_at: dt.datetime | None = None
+    finished_at: dt.datetime | None = None
+    error_message: str | None = None
+    summary: dict | None = None
+
+
+class ReconcileAccepted(BaseModel):
+    """The 202 response when a reconciliation job is enqueued."""
+
+    job_id: str
+    status: str
 
 
 class ReconcileSummary(BaseModel):

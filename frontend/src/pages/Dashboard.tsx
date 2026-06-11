@@ -17,20 +17,38 @@ export function Dashboard() {
   const { data: metrics, loading, error, reload } = useAsync(() => api.getMetrics());
 
   const [running, setRunning] = useState(false);
+  const [phase, setPhase] = useState<string>("");
   const [runError, setRunError] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<ReconcileSummary | null>(null);
 
+  // Enqueue an async reconcile job, then poll until it completes/fails.
   async function runReconcile() {
     setRunning(true);
     setRunError(null);
+    setLastRun(null);
+    setPhase("queued");
     try {
-      const summary = await api.runReconcile();
-      setLastRun(summary);
-      reload();
+      const { job_id } = await api.runReconcile();
+      for (let i = 0; i < 150; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const job = await api.getReconcileJob(job_id);
+        setPhase(job.status);
+        if (job.status === "complete") {
+          setLastRun(job.summary);
+          reload();
+          return;
+        }
+        if (job.status === "failed") {
+          setRunError(job.error_message ?? "Reconciliation failed.");
+          return;
+        }
+      }
+      setRunError("Reconciliation timed out.");
     } catch (e) {
       setRunError(e instanceof ApiError ? e.message : String(e));
     } finally {
       setRunning(false);
+      setPhase("");
     }
   }
 
@@ -47,7 +65,11 @@ export function Dashboard() {
         </div>
         <button className="btn btn-primary" onClick={runReconcile} disabled={running}>
           {running ? <span className="spinner" /> : <IconRefresh className="" />}
-          {running ? "Reconciling…" : "Run reconciliation"}
+          {running
+            ? phase === "running"
+              ? "Reconciliation running…"
+              : "Reconciliation queued…"
+            : "Run reconciliation"}
         </button>
       </div>
 

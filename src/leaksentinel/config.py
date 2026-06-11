@@ -65,6 +65,10 @@ class Settings(BaseSettings):
     first_admin_email: str = "admin@leaksentinel.local"
     first_admin_password: str | None = None
 
+    # Where uploaded insurer feed files are stored (local dir; abstracts an S3
+    # key in production). Created on startup if it doesn't exist.
+    upload_dir: str = "./uploads"
+
     @property
     def active_llm_model(self) -> str:
         """Return the model name for the currently selected provider."""

@@ -1,11 +1,19 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthContext";
-import { IconAudit, IconDashboard, IconLeaks, IconLogout, IconUsers } from "./icons";
+import {
+  IconAudit,
+  IconDashboard,
+  IconFeeds,
+  IconLeaks,
+  IconLogout,
+  IconUsers,
+} from "./icons";
 
 export function Layout() {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === "admin";
+  const canIngest = user?.role === "admin" || user?.role === "ops";
 
   return (
     <div className="app">
@@ -32,6 +40,12 @@ export function Layout() {
             <IconAudit />
             Audit &amp; Escalations
           </NavLink>
+          {canIngest && (
+            <NavLink to="/feeds">
+              <IconFeeds />
+              Feeds
+            </NavLink>
+          )}
           {isAdmin && (
             <NavLink to="/users">
               <IconUsers />

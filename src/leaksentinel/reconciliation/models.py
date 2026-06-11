@@ -201,6 +201,59 @@ class PersistedFinding(Base):
     )
 
 
+class InsurerFeedUpload(Base):
+    """An uploaded insurer feed file (CSV or PDF) and its processing status.
+
+    The raw file is saved under ``settings.upload_dir`` (``storage_path``) and
+    processed by :mod:`leaksentinel.ingestion.upload_processor`, which normalizes
+    its rows into ``insurer_commission_feeds`` and records the row counts here.
+    """
+
+    __tablename__ = "insurer_feed_uploads"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    insurer_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    file_type: Mapped[str] = mapped_column(String(8), nullable=False)  # 'csv' | 'pdf'
+    file_size_bytes: Mapped[int] = mapped_column(nullable=False)
+    storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False
+    )  # uploaded | processing | processed | failed
+    rows_extracted: Mapped[int | None] = mapped_column()
+    rows_loaded: Mapped[int | None] = mapped_column()
+    error_message: Mapped[str | None] = mapped_column(Text)
+    uploaded_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    uploaded_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    processed_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ReconciliationJob(Base):
+    """An async reconciliation run, tracked in Postgres (no external queue).
+
+    ``POST /reconcile`` enqueues one and returns immediately; a background thread
+    runs the pipeline and updates ``status`` / ``summary`` here, which the client
+    polls via ``GET /reconcile/{job_id}``.
+    """
+
+    __tablename__ = "reconciliation_jobs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid4
+    status: Mapped[str] = mapped_column(
+        String(16), nullable=False
+    )  # queued | running | complete | failed
+    triggered_by: Mapped[str] = mapped_column(String(255), nullable=False)
+    queued_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    started_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[dict | None] = mapped_column(JSON)
+
+
 class AuditLog(Base):
     """Append-only, hash-chained record of every mutating action taken by the
     engine. See :func:`leaksentinel.actions.remediation.record_audit` for the

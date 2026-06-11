@@ -217,6 +217,12 @@ def registered_insurers() -> list[str]:
     return sorted(_REGISTRY)
 
 
+def get_registered_insurers() -> list[str]:
+    """Public, queryable list of known insurer names (the registry keys, e.g.
+    ``"Bajaj"``). Used by the feed-upload endpoint to validate ``insurer_name``."""
+    return sorted(_REGISTRY)
+
+
 # --------------------------------------------------------------------------- #
 # Concrete normalizers — one per insurer
 # --------------------------------------------------------------------------- #

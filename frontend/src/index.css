@@ -989,3 +989,62 @@ table select:disabled {
   font-size: 12px;
   color: var(--ink-3);
 }
+
+/* ── Feeds page ─────────────────────────────────────────────────────────── */
+.feeds-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .feeds-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.upload-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dropzone {
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 22px 16px;
+  text-align: center;
+  cursor: pointer;
+  background: var(--surface-2);
+  transition: border-color 0.12s, background 0.12s;
+}
+.dropzone:hover,
+.dropzone-over {
+  border-color: var(--accent);
+  background: var(--accent-wash);
+}
+.dropzone-hint {
+  color: var(--ink-3);
+  font-size: 13px;
+}
+.dropzone-file {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dropzone-size {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.uppercase {
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.feed-error {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--danger);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

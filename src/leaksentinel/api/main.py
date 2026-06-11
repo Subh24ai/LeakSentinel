@@ -12,14 +12,26 @@ CORS is enabled for the Vite dev server (http://localhost:5173).
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from leaksentinel import __version__
@@ -29,10 +41,12 @@ from leaksentinel.api.schemas import (
     ChangePasswordRequest,
     ClaimItem,
     EscalationItem,
+    FeedUploadOut,
     LeakDetail,
     LeakList,
     Metrics,
-    ReconcileSummary,
+    ReconcileAccepted,
+    ReconcileJobOut,
     RegisterRequest,
     Token,
     UserAdminOut,
@@ -58,7 +72,10 @@ from leaksentinel.auth import (
     verify_password,
 )
 from leaksentinel.config import get_settings
-from leaksentinel.db import get_session
+from leaksentinel.db import SessionLocal, get_session
+from leaksentinel.ingestion.normalizer import get_registered_insurers
+from leaksentinel.ingestion.upload_processor import process_feed_upload
+from leaksentinel.reconciliation.models import InsurerFeedUpload, ReconciliationJob
 
 logger = logging.getLogger(__name__)
 
@@ -69,20 +86,19 @@ FRONTEND_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 _READ_ROLES = ("admin", "ops", "viewer")
 _WRITE_ROLES = ("admin", "ops")
 
-# Reusable role-gate dependency (defining it once keeps it out of argument
+# Reusable role-gate dependencies (defining them once keeps them out of argument
 # defaults, where a fresh call would trip flake8-bugbear B008).
 _require_admin = require_role("admin")
-
-# Serializes pipeline runs so two concurrent POST /reconcile calls cannot race on
-# the shared action tables (M6). A second caller while one is running gets 409.
-_reconcile_lock = asyncio.Lock()
+_require_write = require_role(*_WRITE_ROLES)
+_require_read = require_role(*_READ_ROLES)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """Fail closed on startup: no JWT secret => refuse to boot. Then bootstrap
-    the first admin user if configured."""
+    """Fail closed on startup: no JWT secret => refuse to boot. Ensure the upload
+    directory exists, then bootstrap the first admin user if configured."""
     require_jwt_secret()  # raises if JWT_SECRET is unset — the service won't start
+    Path(get_settings().upload_dir).mkdir(parents=True, exist_ok=True)
     try:
         bootstrap_admin()
     except Exception:  # pragma: no cover - depends on DB being migrated
@@ -93,6 +109,7 @@ async def lifespan(_: FastAPI):
 TAGS_METADATA = [
     {"name": "meta", "description": "Liveness and service metadata."},
     {"name": "auth", "description": "Token issuance and the current user."},
+    {"name": "feeds", "description": "Upload and track insurer feed files."},
     {"name": "pipeline", "description": "Trigger and inspect reconciliation runs."},
     {"name": "leaks", "description": "Detected leaks with explanations and amounts."},
     {"name": "actions", "description": "Claims clawed back and the human escalation queue."},
@@ -287,25 +304,112 @@ async def delete_user(
 @app.post(
     "/reconcile",
     tags=["pipeline"],
-    summary="Run the full pipeline",
-    dependencies=[Depends(require_role(*_WRITE_ROLES))],
+    summary="Enqueue a reconciliation run",
+    status_code=status.HTTP_202_ACCEPTED,
 )
-async def reconcile() -> ReconcileSummary:
-    """Trigger a full LangGraph pipeline run (Intake → Reconcile → Detect →
-    Decide → Remediate | Escalate → Finalize) and return the end-to-end summary:
-    policies processed, leaks by reason code, disposition counts, money at risk
-    and claimed back, and a conservation check proving nothing was dropped.
+async def reconcile(
+    background: BackgroundTasks,
+    current: dict = Depends(_require_write),
+) -> ReconcileAccepted:
+    """Enqueue a full pipeline run and return immediately (202). The run executes
+    in a background thread; poll ``GET /reconcile/{job_id}`` for status/summary.
+    Requires the ``admin`` or ``ops`` role.
 
-    Requires the ``admin`` or ``ops`` role. Serialized: while one run is in
-    flight, a concurrent call gets 409 rather than racing on the action tables.
+    Single-flight: if a job is already queued or running, its id is returned
+    instead of starting a second run (concurrent pipeline runs would race on the
+    shared reconciliation tables).
     """
-    if _reconcile_lock.locked():
+    job_id, created = await run_in_threadpool(_create_job, current["email"])
+    if created:
+        background.add_task(_run_reconcile_job, job_id)
+    return ReconcileAccepted(job_id=job_id, status="queued")
+
+
+@app.get(
+    "/reconcile/jobs",
+    tags=["pipeline"],
+    summary="Recent reconciliation jobs",
+    dependencies=[Depends(_require_write)],
+)
+async def list_reconcile_jobs() -> list[ReconcileJobOut]:
+    """The last 20 jobs, newest first. Requires the ``admin`` or ``ops`` role."""
+    jobs = await run_in_threadpool(_list_jobs)
+    return [ReconcileJobOut.model_validate(j) for j in jobs]
+
+
+@app.get(
+    "/reconcile/{job_id}",
+    tags=["pipeline"],
+    summary="Reconciliation job status",
+    dependencies=[Depends(_require_read)],
+)
+async def get_reconcile_job(job_id: str) -> ReconcileJobOut:
+    """Status + summary for one job. 404 if unknown."""
+    job = await run_in_threadpool(_get_job, job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail=f"Unknown job {job_id}")
+    return ReconcileJobOut.model_validate(job)
+
+
+# --------------------------------------------------------------------------- #
+# Feeds
+# --------------------------------------------------------------------------- #
+@app.post(
+    "/feeds/upload",
+    tags=["feeds"],
+    summary="Upload an insurer feed (CSV or PDF)",
+    status_code=status.HTTP_201_CREATED,
+)
+async def upload_feed(
+    file: UploadFile = File(...),
+    insurer_name: str = Form(...),
+    current: dict = Depends(_require_write),
+) -> FeedUploadOut:
+    """Upload a CSV/PDF feed for a known insurer, persist it, and process it
+    synchronously (normalize + load into insurer_commission_feeds). Requires the
+    ``admin`` or ``ops`` role."""
+    if insurer_name not in get_registered_insurers():
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="reconciliation already running",
+            status_code=400,
+            detail=f"Unknown insurer {insurer_name!r}. Allowed: {get_registered_insurers()}",
         )
-    async with _reconcile_lock:
-        return await run_in_threadpool(service.run_reconcile)
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in (".csv", ".pdf"):
+        raise HTTPException(
+            status_code=400, detail="Only .csv and .pdf files are accepted."
+        )
+    content = await file.read()
+    upload = await run_in_threadpool(
+        _handle_upload, current["email"], file.filename or "upload", insurer_name,
+        ext.lstrip("."), content,
+    )
+    return FeedUploadOut.model_validate(upload)
+
+
+@app.get(
+    "/feeds",
+    tags=["feeds"],
+    summary="List feed uploads",
+    dependencies=[Depends(_require_write)],
+)
+async def list_feeds() -> list[FeedUploadOut]:
+    """All uploads, newest first. Requires the ``admin`` or ``ops`` role."""
+    rows = await run_in_threadpool(_list_uploads)
+    return [FeedUploadOut.model_validate(r) for r in rows]
+
+
+@app.get(
+    "/feeds/{upload_id}",
+    tags=["feeds"],
+    summary="One feed upload",
+    dependencies=[Depends(_require_write)],
+)
+async def get_feed(upload_id: int) -> FeedUploadOut:
+    """A single upload record. 404 if unknown."""
+    row = await run_in_threadpool(_get_upload, upload_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Unknown upload {upload_id}")
+    return FeedUploadOut.model_validate(row)
 
 
 # --------------------------------------------------------------------------- #
@@ -458,6 +562,163 @@ def _soft_delete(session: Session, user_id: int) -> User | None:
     if user is not None:
         session.commit()
     return user
+
+
+# --------------------------------------------------------------------------- #
+# Feed upload helpers (threadpool)
+# --------------------------------------------------------------------------- #
+def _handle_upload(
+    email: str, filename: str, insurer_name: str, file_type: str, content: bytes
+) -> InsurerFeedUpload:
+    """Save the file, record the upload row, and process it synchronously."""
+    upload_dir = Path(get_settings().upload_dir)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / f"{uuid.uuid4().hex}_{Path(filename).name}"
+    dest.write_bytes(content)
+
+    session = SessionLocal()
+    try:
+        upload = InsurerFeedUpload(
+            filename=filename,
+            insurer_name=insurer_name,
+            file_type=file_type,
+            file_size_bytes=len(content),
+            storage_path=str(dest),
+            status="uploaded",
+            uploaded_by=email,
+        )
+        session.add(upload)
+        session.commit()
+        upload_id = upload.id
+    finally:
+        session.close()
+
+    process_feed_upload(upload_id)  # owns its own session + commits final status
+
+    session = SessionLocal()
+    try:
+        return session.get(InsurerFeedUpload, upload_id)
+    finally:
+        session.close()
+
+
+def _list_uploads() -> list[InsurerFeedUpload]:
+    session = SessionLocal()
+    try:
+        return list(
+            session.execute(
+                select(InsurerFeedUpload).order_by(
+                    InsurerFeedUpload.uploaded_at.desc(), InsurerFeedUpload.id.desc()
+                )
+            )
+            .scalars()
+            .all()
+        )
+    finally:
+        session.close()
+
+
+def _get_upload(upload_id: int) -> InsurerFeedUpload | None:
+    session = SessionLocal()
+    try:
+        return session.get(InsurerFeedUpload, upload_id)
+    finally:
+        session.close()
+
+
+# --------------------------------------------------------------------------- #
+# Async reconcile job helpers (each owns a fresh session)
+# --------------------------------------------------------------------------- #
+def _create_job(email: str) -> tuple[str, bool]:
+    """Return ``(job_id, created)``. If a job is already queued/running, reuse it
+    (created=False) so we never start two concurrent pipeline runs."""
+    session = SessionLocal()
+    try:
+        active = session.execute(
+            select(ReconciliationJob.id)
+            .where(ReconciliationJob.status.in_(("queued", "running")))
+            .order_by(ReconciliationJob.queued_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        if active is not None:
+            return active, False
+        job_id = str(uuid.uuid4())
+        session.add(ReconciliationJob(id=job_id, status="queued", triggered_by=email))
+        session.commit()
+        return job_id, True
+    finally:
+        session.close()
+
+
+def _run_reconcile_job(job_id: str) -> None:
+    """Background task: run the pipeline and record the outcome. Uses fresh
+    sessions (the request session is long gone by now)."""
+    session = SessionLocal()
+    try:
+        job = session.get(ReconciliationJob, job_id)
+        if job is None:
+            return
+        job.status = "running"
+        job.started_at = _utcnow()
+        session.commit()
+    finally:
+        session.close()
+
+    try:
+        summary = service.run_reconcile()
+        _finish_job(job_id, "complete", summary=summary.model_dump(mode="json"))
+    except Exception as exc:  # noqa: BLE001 - record any failure on the job
+        logger.exception("Reconcile job %s failed.", job_id)
+        _finish_job(job_id, "failed", error=str(exc))
+
+
+def _finish_job(
+    job_id: str, status_: str, *, summary: dict | None = None, error: str | None = None
+) -> None:
+    session = SessionLocal()
+    try:
+        job = session.get(ReconciliationJob, job_id)
+        if job is None:
+            return
+        job.status = status_
+        job.finished_at = _utcnow()
+        if summary is not None:
+            job.summary = summary
+        if error is not None:
+            job.error_message = error[:2000]
+        session.commit()
+    finally:
+        session.close()
+
+
+def _get_job(job_id: str) -> ReconciliationJob | None:
+    session = SessionLocal()
+    try:
+        return session.get(ReconciliationJob, job_id)
+    finally:
+        session.close()
+
+
+def _list_jobs() -> list[ReconciliationJob]:
+    session = SessionLocal()
+    try:
+        return list(
+            session.execute(
+                select(ReconciliationJob)
+                .order_by(ReconciliationJob.queued_at.desc())
+                .limit(20)
+            )
+            .scalars()
+            .all()
+        )
+    finally:
+        session.close()
+
+
+def _utcnow():
+    import datetime as _dt
+
+    return _dt.datetime.now(_dt.UTC)
 
 
 def run() -> None:

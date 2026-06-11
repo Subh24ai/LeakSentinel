@@ -55,6 +55,14 @@ export const IconLogout = (p: P) => (
   </svg>
 );
 
+export const IconFeeds = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M12 16V4" />
+    <path d="M8 8l4-4 4 4" />
+    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+  </svg>
+);
+
 export const IconUsers = (p: P) => (
   <svg {...base} {...p}>
     <circle cx="9" cy="8" r="3" />

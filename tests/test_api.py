@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
@@ -24,6 +25,7 @@ from leaksentinel.reconciliation.models import Policy
 
 pytestmark = pytest.mark.integration
 
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "synthetic"
 ADMIN_EMAIL = "ci-admin@leaksentinel.local"
 ADMIN_PW = "ci-admin-pw-123"
 
@@ -80,10 +82,22 @@ async def client():
 
 @pytest_asyncio.fixture(scope="module")
 async def reconciled(client):
-    """Run the pipeline once so the action tables are populated for read tests."""
+    """Enqueue a reconciliation job and wait for it to complete, returning the
+    summary. (In-process, the BackgroundTask finishes before the POST returns,
+    but we poll defensively.)"""
     resp = await client.post("/reconcile")
-    assert resp.status_code == 200
-    return resp.json()
+    assert resp.status_code == 202, resp.text
+    job_id = resp.json()["job_id"]
+
+    summary = None
+    for _ in range(60):
+        body = (await client.get(f"/reconcile/{job_id}")).json()
+        if body["status"] in ("complete", "failed"):
+            assert body["status"] == "complete", body.get("error_message")
+            summary = body["summary"]
+            break
+    assert summary is not None, "reconciliation job did not complete"
+    return summary
 
 
 @pytest.mark.asyncio
@@ -334,3 +348,100 @@ async def test_admin_patch_and_soft_delete_other(client):
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         login = await c.post("/auth/token", data={"username": email, "password": "TempPass1"})
         assert login.status_code == 401
+
+
+# --------------------------------------------------------------------------- #
+# Async reconcile jobs
+# --------------------------------------------------------------------------- #
+@pytest.mark.asyncio
+async def test_reconcile_enqueues_job_and_completes(client):
+    resp = await client.post("/reconcile")
+    assert resp.status_code == 202, resp.text
+    body = resp.json()
+    assert body["status"] == "queued"
+    job_id = body["job_id"]
+
+    job = None
+    for _ in range(60):
+        job = (await client.get(f"/reconcile/{job_id}")).json()
+        if job["status"] in ("complete", "failed"):
+            break
+    assert job and job["status"] == "complete", job
+    assert job["summary"]["policies_processed"] == 200
+    assert job["started_at"] and job["finished_at"]
+
+    # Shows up in the recent-jobs list.
+    jobs = (await client.get("/reconcile/jobs")).json()
+    assert any(j["id"] == job_id for j in jobs)
+
+
+@pytest.mark.asyncio
+async def test_reconcile_unknown_job_404(client):
+    assert (await client.get("/reconcile/not-a-real-job")).status_code == 404
+
+
+# --------------------------------------------------------------------------- #
+# Feed uploads
+# --------------------------------------------------------------------------- #
+def _bajaj_csv() -> bytes:
+    path = DATA_DIR / "bajaj_feed.csv"
+    if not path.exists():
+        pytest.skip("bajaj_feed.csv missing; run the generator")
+    return path.read_bytes()
+
+
+@pytest.mark.asyncio
+async def test_feed_upload_csv_processes_and_lists(client):
+    content = _bajaj_csv()
+    resp = await client.post(
+        "/feeds/upload",
+        files={"file": ("bajaj_feed.csv", content, "text/csv")},
+        data={"insurer_name": "Bajaj"},
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["insurer_name"] == "Bajaj"
+    assert body["file_type"] == "csv"
+    assert body["status"] == "processed"
+    assert body["rows_loaded"] and body["rows_loaded"] > 0
+
+    feeds = (await client.get("/feeds")).json()
+    assert any(f["id"] == body["id"] for f in feeds)
+    one = (await client.get(f"/feeds/{body['id']}")).json()
+    assert one["id"] == body["id"]
+
+
+@pytest.mark.asyncio
+async def test_feed_upload_unknown_insurer_400(client):
+    resp = await client.post(
+        "/feeds/upload",
+        files={"file": ("x.csv", b"a,b\n1,2\n", "text/csv")},
+        data={"insurer_name": "Acme Insurance"},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_feed_upload_bad_extension_400(client):
+    resp = await client.post(
+        "/feeds/upload",
+        files={"file": ("notes.txt", b"hello", "text/plain")},
+        data={"insurer_name": "Bajaj"},
+    )
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_feed_upload_wrong_insurer_loads_zero(client):
+    # A Bajaj file processed as "Digit" parses no usable rows (columns differ).
+    content = _bajaj_csv()
+    resp = await client.post(
+        "/feeds/upload",
+        files={"file": ("bajaj_feed.csv", content, "text/csv")},
+        data={"insurer_name": "Digit"},
+    )
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["status"] == "processed"
+    assert body["rows_extracted"] and body["rows_extracted"] > 0
+    assert body["rows_loaded"] == 0
