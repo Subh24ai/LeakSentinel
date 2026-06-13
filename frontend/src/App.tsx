@@ -4,6 +4,7 @@ import { AdminRoute } from "./auth/AdminRoute";
 import { AuthProvider } from "./auth/AuthContext";
 import { LoginPage } from "./auth/LoginPage";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { RegisterPage } from "./auth/RegisterPage";
 import { WriteRoute } from "./auth/WriteRoute";
 import { Layout } from "./components/Layout";
 import { AuditEscalations } from "./pages/AuditEscalations";
@@ -20,6 +21,7 @@ export function App() {
       <Routes>
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Authenticated, but reachable even with a temporary password (it's the
             one screen the password-change gate must not block). */}

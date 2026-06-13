@@ -5,10 +5,12 @@ every function here to a threadpool. Keeping the blocking SQLAlchemy / LangGraph
 work in one place means the endpoints stay declarative and the business logic is
 unit-testable without a web server.
 
-Leaks are not a persisted table: they're recomputed on demand from the
-reconciliation results + the detector layer, so the API always reflects the same
-explainable findings the rest of the system uses, with their human-readable
-explanations and rupee amounts attached.
+Leaks are served from the ``findings`` table, materialised once per pipeline run
+(see :func:`leaksentinel.graph.workflow.finalize`): reads filter to the latest
+completed ``run_id`` rather than re-running the rule detectors and the Isolation
+Forest on every request. The API therefore reflects the same explainable findings
+the rest of the system uses — human-readable explanations and rupee amounts
+included — without re-fitting the model per call.
 """
 
 from __future__ import annotations

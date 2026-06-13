@@ -14,9 +14,11 @@ import csv
 import json
 from pathlib import Path
 
+from sqlalchemy import select
+
 from leaksentinel.db import SessionLocal
 from leaksentinel.ingestion.normalizer import get_normalizer, registered_insurers
-from leaksentinel.reconciliation.models import InsurerCommissionFeed
+from leaksentinel.reconciliation.models import InsurerCommissionFeed, InsurerFeedUpload
 from leaksentinel.reconciliation.schemas import ReconciliationView
 
 # repo_root/data/synthetic (loader.py is src/leaksentinel/ingestion/loader.py)
@@ -40,11 +42,8 @@ def _to_feed_row(view: ReconciliationView) -> InsurerCommissionFeed:
     )
 
 
-def load_feeds(session, data_dir: Path = DEFAULT_DATA_DIR) -> dict[str, dict[str, int]]:
-    """Truncate + reload every insurer feed. Returns per-insurer counts.
-
-    The session is mutated and flushed but NOT committed — the caller commits.
-    """
+def _load_synthetic(session, data_dir: Path) -> dict[str, dict[str, int]]:
+    """Truncate insurer_commission_feeds and reload from the synthetic CSVs."""
     # Idempotent: clear existing feeds so re-running doesn't duplicate.
     session.query(InsurerCommissionFeed).delete()
 
@@ -60,23 +59,106 @@ def load_feeds(session, data_dir: Path = DEFAULT_DATA_DIR) -> dict[str, dict[str
             rows = list(csv.DictReader(fh))
 
         views = normalizer.normalize_feed(rows)
-        flagged = 0
+        flagged = sum(1 for v in views if v.normalization_notes)
         for view in views:
-            if view.normalization_notes:
-                flagged += 1
             session.add(_to_feed_row(view))
 
         summary[insurer] = {"loaded": len(views), "flagged": flagged}
+
+    return summary
+
+
+def _uploaded_views(session) -> list[ReconciliationView]:
+    """Normalized rows from the LATEST processed upload per insurer (a later
+    upload for an insurer supersedes earlier ones)."""
+    uploads = (
+        session.execute(
+            select(InsurerFeedUpload)
+            .where(InsurerFeedUpload.status == "processed")
+            .order_by(InsurerFeedUpload.uploaded_at, InsurerFeedUpload.id)
+        )
+        .scalars()
+        .all()
+    )
+    latest: dict[str, InsurerFeedUpload] = {}
+    for up in uploads:
+        latest[up.insurer_name] = up  # last one wins
+
+    views: list[ReconciliationView] = []
+    for up in latest.values():
+        path = Path(up.storage_path)
+        if not path.exists():
+            continue
+        try:
+            normalizer = get_normalizer(up.insurer_name)
+        except KeyError:
+            continue
+        if up.file_type == "csv":
+            with path.open(newline="", encoding="utf-8") as fh:
+                rows = list(csv.DictReader(fh))
+            views.extend(normalizer.normalize_feed(rows))
+        elif up.file_type == "pdf":
+            # Lazy import: upload_processor imports this module, so importing it at
+            # module load would form a cycle.
+            from leaksentinel.ingestion.upload_processor import _normalize
+
+            views.extend(_normalize(str(path), up.insurer_name, "pdf"))
+    return views
+
+
+def _overlay_uploaded(session) -> dict[str, dict[str, int]]:
+    """Upsert uploaded rows onto insurer_commission_feeds — uploaded wins.
+
+    Deduplicates on (policy_no, insurer_name): every existing row for a key that
+    appears in the uploads is removed and replaced by the uploaded rows for that
+    key (so an uploaded feed, including its duplicate-payment rows, supersedes the
+    synthetic rows for those policies, while policies absent from the uploads keep
+    their existing rows). Does NOT truncate.
+    """
+    views = [v for v in _uploaded_views(session) if v.policy_no]
+    keys = {(v.policy_no, v.insurer_name) for v in views}
+    for policy_no, insurer in keys:
+        session.query(InsurerCommissionFeed).filter_by(
+            policy_no=policy_no, insurer_name=insurer
+        ).delete()
+    for view in views:
+        session.add(_to_feed_row(view))
+    return {"_uploaded": {"loaded": len(views), "insurers": len({k[1] for k in keys})}}
+
+
+def load_feeds(
+    session, data_dir: Path = DEFAULT_DATA_DIR, source: str = "synthetic"
+) -> dict[str, dict[str, int]]:
+    """Load insurer feeds from ``source`` (mutated + flushed, NOT committed):
+
+    * ``"synthetic"`` — truncate + reload from the synthetic CSVs (default; used
+      by ``make ingest`` and the precision/recall tests).
+    * ``"uploaded"``  — overlay only processed uploads; existing rows are NOT
+      truncated.
+    * ``"all"``       — synthetic first, then overlay processed uploads (uploads
+      win for the same policy + insurer).
+    """
+    if source not in ("synthetic", "uploaded", "all"):
+        raise ValueError(f"unknown feed source {source!r}")
+
+    summary: dict[str, dict[str, int]] = {}
+    if source in ("synthetic", "all"):
+        summary.update(_load_synthetic(session, data_dir))
+        session.flush()  # make synthetic rows visible to the overlay's delete-by-key
+    if source in ("uploaded", "all"):
+        summary.update(_overlay_uploaded(session))
 
     session.flush()
     return summary
 
 
-def run(data_dir: Path = DEFAULT_DATA_DIR) -> dict[str, dict[str, int]]:
-    """Open a session, load all feeds, commit, return the summary."""
+def run(
+    source: str = "synthetic", data_dir: Path = DEFAULT_DATA_DIR
+) -> dict[str, dict[str, int]]:
+    """Open a session, load feeds from ``source``, commit, return the summary."""
     session = SessionLocal()
     try:
-        summary = load_feeds(session, data_dir)
+        summary = load_feeds(session, data_dir, source=source)
         session.commit()
         return summary
     except Exception:

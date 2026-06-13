@@ -31,7 +31,7 @@ from fastapi import (
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from leaksentinel import __version__
@@ -48,6 +48,7 @@ from leaksentinel.api.schemas import (
     ReconcileAccepted,
     ReconcileJobOut,
     RegisterRequest,
+    SignupRequest,
     Token,
     UserAdminOut,
     UserOut,
@@ -216,6 +217,26 @@ async def change_password(
 # --------------------------------------------------------------------------- #
 # User management (admin)
 # --------------------------------------------------------------------------- #
+@app.post(
+    "/auth/signup",
+    tags=["auth"],
+    summary="Self-service registration (public)",
+    status_code=status.HTTP_201_CREATED,
+)
+async def signup(
+    body: SignupRequest,
+    session: Session = Depends(get_session),
+) -> Token:
+    """Public sign-up. The first account created bootstraps the system as an
+    admin; later accounts are viewers (role is never taken from the client).
+    Returns a JWT so the new user is logged in immediately — no separate login
+    round-trip. 409 if the email is already registered."""
+    user = await run_in_threadpool(_signup_user, session, body.email, body.password)
+    token = create_access_token(user.id, user.role, user.must_change_password)
+    await run_in_threadpool(_record_login, session, user)
+    return Token(access_token=token, must_change_password=user.must_change_password)
+
+
 @app.post(
     "/auth/register",
     tags=["auth"],
@@ -543,6 +564,28 @@ def _register_user(
         raise HTTPException(status_code=409, detail=f"A user with email {email!r} already exists.")
     user = create_user(
         session, email, password, role, created_by=created_by, must_change_password=True
+    )
+    session.commit()
+    return user
+
+
+def _signup_user(session: Session, email: str, password: str) -> User:
+    """Public self-service registration. The FIRST account to be created
+    bootstraps the system as an ``admin``; every account after that gets the
+    read-only ``viewer`` role (an admin can promote them later in the Users
+    screen). The user chooses their own password, so ``must_change_password`` is
+    False — unlike admin-provisioned accounts. 409 if the email already exists."""
+    if get_user_by_email(session, email) is not None:
+        raise HTTPException(status_code=409, detail=f"A user with email {email!r} already exists.")
+    is_first_user = session.execute(select(func.count(User.id))).scalar_one() == 0
+    role = "admin" if is_first_user else "viewer"
+    user = create_user(
+        session,
+        email,
+        password,
+        role,
+        created_by="self-signup",
+        must_change_password=False,
     )
     session.commit()
     return user

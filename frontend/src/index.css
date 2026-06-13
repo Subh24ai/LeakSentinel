@@ -859,6 +859,20 @@ tbody tr.clickable:hover {
   padding: 9px 12px;
   font-size: 13px;
 }
+.login-alt {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.login-alt a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.login-alt a:hover {
+  text-decoration: underline;
+}
 
 /* ── Sidebar user / logout ──────────────────────────────────────────────── */
 .user-box {

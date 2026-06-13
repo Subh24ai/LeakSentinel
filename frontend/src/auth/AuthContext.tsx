@@ -16,6 +16,7 @@ interface AuthState {
   user: AuthUser | null;
   mustChangePassword: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   logout: () => void;
 }
@@ -76,6 +77,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [navigate],
   );
 
+  const signup = useCallback(
+    async (email: string, password: string) => {
+      // Sign up returns a token (self-chosen password ⇒ never must-change), so
+      // the new user lands straight in the app, exactly like a fresh login.
+      const tok = await api.signup(email, password);
+      setAuthToken(tok.access_token);
+      setToken(tok.access_token);
+      setMustChangePassword(false);
+      try {
+        setUser(await api.getMe());
+      } catch {
+        setUser(null);
+      }
+      navigate("/", { replace: true });
+    },
+    [navigate],
+  );
+
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
       await api.changePassword(currentPassword, newPassword);
@@ -91,8 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ token, user, mustChangePassword, login, changePassword, logout }),
-    [token, user, mustChangePassword, login, changePassword, logout],
+    () => ({ token, user, mustChangePassword, login, signup, changePassword, logout }),
+    [token, user, mustChangePassword, login, signup, changePassword, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -79,6 +79,15 @@ class RegisterRequest(BaseModel):
     role: Role
 
 
+class SignupRequest(BaseModel):
+    """Public self-service registration: the user picks their own password, so
+    there is no forced change. Role is decided server-side (first user = admin,
+    everyone after = viewer), never accepted from the client."""
+
+    email: str = Field(min_length=3)
+    password: str = Field(min_length=8)
+
+
 class ChangePasswordRequest(BaseModel):
     # new_password length is validated in the handler (returns 400, per spec),
     # not here (which would surface as a 422).

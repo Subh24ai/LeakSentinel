@@ -11,8 +11,12 @@ Only rows that normalize to a usable ``policy_no`` are loaded — the gap betwee
 ``rows_extracted`` and ``rows_loaded`` reflects rows whose columns didn't match
 the selected insurer (e.g. uploading a Bajaj file as "Digit").
 
-This is a standalone ingest path; the reconciliation pipeline's intake still
-reads the canonical synthetic CSVs.
+On upload, rows are loaded into ``insurer_commission_feeds`` immediately so the
+feed is visible right away. The reconciliation pipeline's intake then picks
+uploads up too: once any feed has been processed, intake runs the loader with
+``source='all'`` — the synthetic baseline with processed uploads overlaid on top
+(uploads winning per policy). See :func:`leaksentinel.ingestion.loader.load_feeds`,
+which supports ``source`` in ``{'synthetic', 'uploaded', 'all'}``.
 """
 
 from __future__ import annotations

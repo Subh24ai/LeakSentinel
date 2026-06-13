@@ -60,6 +60,7 @@ from leaksentinel.graph.state import (
 from leaksentinel.ingestion import loader
 from leaksentinel.reconciliation import engine
 from leaksentinel.reconciliation.models import (
+    InsurerFeedUpload,
     PersistedFinding,
     Policy,
     ReconciliationResult,
@@ -75,12 +76,28 @@ _ZERO = Decimal("0.00")
 # Nodes
 # --------------------------------------------------------------------------- #
 def intake(state: ReconciliationState) -> dict:
-    """Optionally reset this run's action tables, then load + normalize feeds."""
+    """Optionally reset this run's action tables, then load + normalize feeds.
+
+    Once any real feed has been uploaded (a processed ``InsurerFeedUpload``), the
+    pipeline runs on ``source='all'`` — uploaded data overlaid on the synthetic
+    baseline, with uploads winning per policy. A fresh install with no uploads
+    keeps the original ``source='synthetic'`` behaviour.
+    """
     if state.reset_actions:
         _reset_action_tables()
-    summary = loader.run()
+
+    session = SessionLocal()
+    try:
+        has_uploads = (
+            session.query(InsurerFeedUpload).filter_by(status="processed").count() > 0
+        )
+    finally:
+        session.close()
+
+    source = "all" if has_uploads else "synthetic"
+    summary = loader.run(source=source)
     loaded = sum(c.get("loaded", 0) for c in summary.values())
-    logger.info("Intake: loaded %d normalized feed rows.", loaded)
+    logger.info("Intake: loaded %d normalized feed rows (source=%s).", loaded, source)
     return {"ingest_summary": summary}
 
 

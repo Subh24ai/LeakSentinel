@@ -244,6 +244,52 @@ async def test_register_creates_must_change_user_and_409_on_dup(client):
 
 
 @pytest.mark.asyncio
+async def test_public_signup_creates_active_viewer_and_logs_in(client):
+    """Self-service signup needs no auth, returns a working token immediately
+    (self-chosen password ⇒ not gated), and — since an admin already exists —
+    the new account is a plain ``viewer``. Role is never taken from the client.
+    A duplicate email returns 409."""
+    email = _email("signup")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        # No Authorization header — this endpoint is public.
+        resp = await c.post(
+            "/auth/signup",
+            # A client-supplied "role" must be ignored, not honored.
+            json={"email": email, "password": "ChosenPass1", "role": "admin"},
+        )
+        assert resp.status_code == 201, resp.text
+        tok = resp.json()
+        assert tok["must_change_password"] is False
+        assert tok["access_token"]
+
+        # The returned token works right away and is NOT password-gated.
+        c.headers.update({"Authorization": f"Bearer {tok['access_token']}"})
+        me = await c.get("/auth/me")
+        assert me.status_code == 200, me.text
+        assert me.json()["email"] == email
+        assert me.json()["role"] == "viewer"  # not admin, despite the request body
+
+        # A viewer can read but cannot reach admin-only user management.
+        assert (await c.get("/metrics")).status_code == 200
+        assert (await c.get("/auth/users")).status_code == 403
+
+    # The same credentials also work through the normal login endpoint.
+    async with AsyncClient(transport=transport, base_url="http://test") as c2:
+        login = await c2.post(
+            "/auth/token", data={"username": email, "password": "ChosenPass1"}
+        )
+        assert login.status_code == 200, login.text
+        assert login.json()["must_change_password"] is False
+
+    # Duplicate email -> 409.
+    dup = await client.post(
+        "/auth/signup", json={"email": email, "password": "ChosenPass1"}
+    )
+    assert dup.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_temp_password_user_is_gated_until_change(client):
     email = _email("gate")
     assert (
@@ -445,3 +491,38 @@ async def test_feed_upload_wrong_insurer_loads_zero(client):
     assert body["status"] == "processed"
     assert body["rows_extracted"] and body["rows_extracted"] > 0
     assert body["rows_loaded"] == 0
+
+
+@pytest.mark.asyncio
+async def test_uploaded_feed_survives_reconcile(client):
+    """The upload→reconcile pipeline is connected: an uploaded feed is NOT wiped
+    when reconcile runs (intake uses source='all'), and the run completes."""
+    content = _bajaj_csv()
+    up = (
+        await client.post(
+            "/feeds/upload",
+            files={"file": ("bajaj_feed.csv", content, "text/csv")},
+            data={"insurer_name": "Bajaj"},
+        )
+    ).json()
+    upload_id = up["id"]
+    assert up["status"] == "processed" and up["rows_loaded"] == 50
+
+    # Run reconcile (async) to completion.
+    job_id = (await client.post("/reconcile")).json()["job_id"]
+    job = None
+    for _ in range(60):
+        job = (await client.get(f"/reconcile/{job_id}")).json()
+        if job["status"] in ("complete", "failed"):
+            break
+    assert job and job["status"] == "complete", job
+    assert job["summary"]["policies_processed"] > 0
+
+    # The upload record survives the reconcile (rows were NOT wiped).
+    one = (await client.get(f"/feeds/{upload_id}")).json()
+    assert one["status"] == "processed"
+    assert one["rows_loaded"] == 50
+
+    feeds = (await client.get("/feeds")).json()
+    mine = next(f for f in feeds if f["id"] == upload_id)
+    assert mine["rows_loaded"] == 50

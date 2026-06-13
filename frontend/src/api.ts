@@ -281,6 +281,20 @@ export const api = {
     );
   },
 
+  // Public self-service registration. Returns a token (the new user is logged
+  // in immediately). skipAuthRedirect: a 409/422 here is a form error, not a
+  // session expiry, so it must not trigger the global logout interceptor.
+  signup: (email: string, password: string) =>
+    request<Token>(
+      "/auth/signup",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      },
+      { skipAuthRedirect: true },
+    ),
+
   getMe: () => request<AuthUser>("/auth/me"),
 
   changePassword: (currentPassword: string, newPassword: string) =>
